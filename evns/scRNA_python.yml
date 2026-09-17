@@ -1,0 +1,29 @@
+# =====================================================================
+# scrna-python.yml  —  Python velocity / cell-fate environment
+# Covers: Part 13 (scVelo), Part 14 (CellRank), Python steps of Part 15
+# Kept SEPARATE from the R env on purpose: the scanpy/scvelo/cellrank
+# stack pins versions that conflict with the Seurat 5 / Bioconductor stack.
+# Create with:
+#   micromamba create -f scrna-python.yml
+#   micromamba activate scrna-velocity
+# =====================================================================
+name: scrna-velocity
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - scanpy
+  - anndata
+  - scvelo                 # Part 13: RNA velocity
+  - cellrank               # Part 14: cell-fate probabilities
+  - python-igraph
+  - leidenalg
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - jupyterlab             # interactive notebooks (Parts 13-14)
+  - star                   # STARsolo: spliced/unspliced counts (Part 13)
+  - samtools
+  - pip

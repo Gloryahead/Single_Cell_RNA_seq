@@ -1,0 +1,105 @@
+# =====================================================================
+# scrna.yml  —  Main R / Seurat single-cell environment (NGS101 series)
+# Covers: Parts 1-12 and the R side of Parts 15, 16, 17
+# Create with:
+#   micromamba create -f scrna.yml
+#   micromamba activate scrna
+# Notes:
+#   - channel order matters (conda-forge first, then bioconda)
+#   - GitHub-only R packages are NOT here; see install_github_packages.R
+#   - Expect a few minutes to solve; use a recent micromamba/mamba.
+# =====================================================================
+name: scrna
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # ---- language runtimes ----
+  - python=3.11
+  - r-base>=4.3
+
+  # ---- Part 1: download, QC, alignment (command-line tools) ----
+  - sra-tools            # SRA download
+  - fastqc               # per-sample QC
+  - multiqc              # aggregate QC reports
+  - samtools             # BAM manipulation
+  - star                 # aligner; also STARsolo for Part 13 spliced/unspliced
+
+  # ---- Core single-cell objects (Parts 2-12, 15-17) ----
+  - r-seurat>=5
+  - r-seuratobject>=5
+  - bioconductor-singlecellexperiment
+  - bioconductor-summarizedexperiment
+  - bioconductor-s4vectors
+
+  # ---- Part 2 / 2-2: QC, empty drops, doublets, ambient RNA ----
+  - bioconductor-dropletutils      # EmptyDrops
+  - bioconductor-scater
+  - bioconductor-scran
+  - bioconductor-scdblfinder       # scDblFinder (doublets)
+  - bioconductor-celda             # DecontX (ambient RNA)
+  - r-soupx                        # SoupX (ambient RNA)
+  - r-fnn
+  - r-cluster
+  - r-reshape2
+
+  # ---- Part 3: integration & clustering ----
+  - r-harmony                      # Harmony integration
+  - bioconductor-batchelor         # FastMNN integration
+
+  # ---- Part 4: cell-type annotation ----
+  - bioconductor-singler           # SingleR
+  - bioconductor-celldex           # reference datasets (HPCA, Monaco, DICE...)
+
+  # ---- Part 5: DE / proportion testing / pathway ----
+  - bioconductor-deseq2            # pseudobulk DE
+  - bioconductor-mast              # single-cell DE
+  - bioconductor-fgsea             # GSEA
+  - bioconductor-clusterprofiler   # GO/KEGG enrichment
+  - bioconductor-enrichplot
+  - bioconductor-org.hs.eg.db      # human gene annotation
+  - r-msigdbr                      # MSigDB gene sets
+  - bioconductor-speckle           # propeller (cell-type proportion testing)
+
+  # ---- Part 7-2: Slingshot trajectory ----
+  - bioconductor-slingshot
+  - bioconductor-tradeseq
+  - bioconductor-trajectoryutils   # princurve is pulled in automatically by slingshot
+
+  # ---- Part 12: hdWGCNA dependencies (hdWGCNA itself via GitHub) ----
+  - r-wgcna                        # WGCNA is a CRAN pkg -> r-wgcna (NOT bioconductor-wgcna)
+  - bioconductor-ucell
+  - bioconductor-geneoverlap
+  - bioconductor-genomicranges     # hdWGCNA dependency
+  - r-hdf5r                        # hdWGCNA dependency
+  - r-enrichr                      # Enrichr (Part 12); conda build of enrichR
+
+  # ---- Parts 16 / 17: decoupleR + networks/pathways ----
+  - bioconductor-decoupler         # decoupleR engine
+  - bioconductor-omnipathr         # CollecTRI / network access
+  - bioconductor-progeny           # PROGENy pathway model
+
+  # ---- Parts 9 / 10 plotting dependencies (tools themselves via GitHub) ----
+  - bioconductor-complexheatmap    # CellChat / NicheNet heatmaps
+  - r-circlize
+  - r-ggraph
+  - r-ggalluvial                   # CellChat river/alluvial plots
+  - bioconductor-biocneighbors
+
+  # ---- General visualization / utilities used throughout ----
+  - r-tidyverse
+  - r-ggplot2
+  - r-dplyr
+  - r-patchwork
+  - r-ggrepel
+  - r-rcolorbrewer
+  - r-viridis
+  - r-pheatmap
+  - r-igraph
+  - r-cowplot
+  - r-r.utils
+
+  # ---- Installers needed for the GitHub-only packages ----
+  - r-remotes
+  - r-devtools
+  - r-biocmanager

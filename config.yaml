@@ -1,0 +1,67 @@
+# config.yaml — central configuration for the GSE174609 scRNA-seq pipeline.
+# Every R script reads this via load_config() in code/utils.R.
+# Every Python script reads it via yaml.safe_load(open("config.yaml")).
+# Edit the values here; do NOT hard-code paths inside individual scripts.
+
+# ── Project metadata ──────────────────────────────────────────────────────────
+project:
+  name: GSE174609
+  organism: human          # human | mouse (controls mito pattern and SingleR ref)
+  # All results/data written here (can be on xdisk):
+  outdir: /xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/results
+
+seed: 42
+
+# ── Sample manifest ───────────────────────────────────────────────────────────
+# Matches the GSE174609 PBMC dataset (periodontitis ctrl/pre/post treatment).
+# condition must match the de_contrasts group/ref values below.
+samples:
+  - {id: Healthy_1,      condition: Healthy,       patient: P1}
+  - {id: Healthy_2,      condition: Healthy,       patient: P2}
+  - {id: Healthy_3,      condition: Healthy,       patient: P3}
+  - {id: Healthy_4,      condition: Healthy,       patient: P4}
+  - {id: Pre_Patient_1,  condition: Pre,           patient: P5}
+  - {id: Pre_Patient_2,  condition: Pre,           patient: P6}
+  - {id: Pre_Patient_3,  condition: Pre,           patient: P7}
+  - {id: Pre_Patient_4,  condition: Pre,           patient: P8}
+  - {id: Post_Patient_1, condition: Post,          patient: P5}
+  - {id: Post_Patient_2, condition: Post,          patient: P6}
+  - {id: Post_Patient_3, condition: Post,          patient: P7}
+  - {id: Post_Patient_4, condition: Post,          patient: P8}
+
+# ── QC thresholds (Part 2) ────────────────────────────────────────────────────
+# Adjust these AFTER looking at qc_violin_prefilter.png — they are not universal.
+qc:
+  min_cells:       3       # minimum cells a gene must appear in (CreateSeuratObject)
+  min_genes:       500     # cells with fewer detected genes are removed
+  max_genes:       6000    # upper cut-off (removes potential doublets)
+  max_mito_pct:    10      # % mitochondrial reads above this = low-quality cell
+  remove_doublets: true    # run scDblFinder and remove predicted doublets
+
+# ── Integration & clustering (Part 3) ────────────────────────────────────────
+cluster:
+  n_hvg:       3000        # number of highly variable genes
+  n_pcs:       30          # PCs to compute and use
+  integration: harmony     # harmony | cca | rpca | none
+  batch_key:   sample      # metadata column to correct for (sample = donor)
+  resolution:  0.6         # Leiden/Louvain resolution; tune from 0.4–1.2
+
+# ── Cell-type annotation (Part 4) ────────────────────────────────────────────
+annotate:
+  method:      singler     # singler | manual
+  singler_ref: HumanPrimaryCellAtlasData   # celldex reference (see ?celldex)
+  # Rename labels after manual inspection with diagnose_labels.R.
+  # Key: old SingleR label  Value: corrected label
+  rename:
+    Progenitors: Platelets   # PPBP/PF4-high "progenitors" are actually platelets
+  # Labels to drop entirely (artifact populations)
+  drop:
+    - Neutrophils   # rarely survive PBMC density-gradient; likely prep artifact
+    - Basophils     # too few cells in most PBMC datasets; likely artifact
+
+# ── Differential expression contrasts (Part 5) ───────────────────────────────
+# Each entry runs pseudobulk DESeq2 for the named group vs ref comparison.
+de_contrasts:
+  - {name: post_vs_healthy, group: Post,  ref: Healthy}
+  - {name: pre_vs_healthy,  group: Pre,   ref: Healthy}
+  - {name: post_vs_pre,     group: Post,  ref: Pre}

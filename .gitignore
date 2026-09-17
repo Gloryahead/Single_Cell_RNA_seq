@@ -1,0 +1,39 @@
+# Large data files — never commit these
+*.fastq
+*.fastq.gz
+*.bam
+*.bai
+*.sra
+
+# Analysis outputs — generated from code, not stored in git
+results/
+data/
+references/
+software/
+
+# R data objects
+*.rds
+*.RData
+
+# Python/AnnData objects
+*.h5ad
+*.h5
+*.loom
+
+# Container images
+*.sif
+*.simg
+
+# Log files
+*.log
+logs/
+
+# Cell Ranger output
+cellranger_output/
+
+# Environment / cache / scratch
+.Rhistory
+.Rdata
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
