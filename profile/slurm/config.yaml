@@ -1,0 +1,26 @@
+# Snakemake SLURM executor profile
+# Usage: snakemake --profile profile/slurm [--use-singularity] -j 8 all
+executor: slurm
+
+# Default resources for every rule (override per rule in the Snakefile)
+default-resources:
+  slurm_account: haining
+  slurm_partition: standard
+  mem_mb: 32768       # 32 GB
+  runtime: 120        # minutes
+  cpus_per_task: 4
+  nodes: 1
+
+# Snakemake-level parallelism: how many jobs can run simultaneously
+jobs: 8
+
+# Retry a failed job once before giving up
+retries: 1
+
+# Wait this many seconds for output files to appear after a job finishes
+# (needed on shared filesystems like xdisk where writes can lag)
+latency-wait: 60
+
+# Print the reason each rule is being run
+reason: true
+printshellcmds: true

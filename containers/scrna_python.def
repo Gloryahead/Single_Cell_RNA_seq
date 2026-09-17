@@ -1,0 +1,25 @@
+Bootstrap: docker
+From: mambaorg/micromamba:1.5.8
+
+%labels
+    Author maarowosegbe@arizona.edu
+    Description scRNA-seq Python velocity/fate environment (Parts 13-14)
+
+%files
+    evns/scRNA_python.yml /opt/env.yml
+
+%post
+    # PETSc/SLEPc (needed by CellRank's GPCCA) requires MPI headers
+    apt-get update -qq && apt-get install -y --no-install-recommends \
+        libopenmpi-dev openmpi-bin \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    micromamba env create -f /opt/env.yml && micromamba clean -afy
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    eval "$(micromamba shell hook --shell bash)"
+    micromamba activate scrna-velocity
+
+%runscript
+    exec python "$@"

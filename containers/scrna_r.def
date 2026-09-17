@@ -1,0 +1,32 @@
+Bootstrap: docker
+From: mambaorg/micromamba:1.5.8
+
+%labels
+    Author maarowosegbe@arizona.edu
+    Description scRNA-seq R/Seurat environment (Parts 1-12, 15-17)
+
+%files
+    evns/csRNA.yml /opt/env.yml
+    evns/Install_github_packages.R /opt/install_github_packages.R
+
+%post
+    # Install system deps needed by some R packages
+    apt-get update -qq && apt-get install -y --no-install-recommends \
+        libxml2-dev libssl-dev libcurl4-openssl-dev libhdf5-dev \
+        libgit2-dev libfontconfig1-dev libfreetype6-dev libharfbuzz-dev \
+        libfribidi-dev libpng-dev libtiff5-dev libjpeg-dev \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    # Build the conda environment from the YAML
+    micromamba env create -f /opt/env.yml && micromamba clean -afy
+
+    # Install GitHub-only R packages inside the environment
+    micromamba run -n scrna R --no-save < /opt/install_github_packages.R
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    eval "$(micromamba shell hook --shell bash)"
+    micromamba activate scrna
+
+%runscript
+    exec Rscript "$@"
