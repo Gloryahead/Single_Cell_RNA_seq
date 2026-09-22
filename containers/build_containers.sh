@@ -13,8 +13,9 @@
 # ---------------------------------------------------------------------
 set -euo pipefail
 
-PROJECT="${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
-cd "$PROJECT"
+CODE="${SCRNA_PROJECT:-/home/u11/maarowosegbe/Single_Cell_RNA_seq}"
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
+mkdir -p "$DATA/containers"
 
 BUILD_R=true
 BUILD_PY=true
@@ -24,15 +25,15 @@ case "${1:-}" in
 esac
 
 if $BUILD_R; then
-  echo "Building R container (scrna_r.sif) ..."
-  apptainer build --fakeroot containers/scrna_r.sif containers/scrna_r.def
-  echo "Done: containers/scrna_r.sif"
+  echo "Building R container -> $DATA/containers/scrna_r.sif ..."
+  apptainer build --fakeroot "$DATA/containers/scrna_r.sif" "$CODE/containers/scrna_r.def"
+  echo "Done: $DATA/containers/scrna_r.sif"
 fi
 
 if $BUILD_PY; then
-  echo "Building Python container (scrna_python.sif) ..."
-  apptainer build --fakeroot containers/scrna_python.sif containers/scrna_python.def
-  echo "Done: containers/scrna_python.sif"
+  echo "Building Python container -> $DATA/containers/scrna_python.sif ..."
+  apptainer build --fakeroot "$DATA/containers/scrna_python.sif" "$CODE/containers/scrna_python.def"
+  echo "Done: $DATA/containers/scrna_python.sif"
 fi
 
 echo "All containers built. Run Snakemake with:"

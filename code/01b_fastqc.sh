@@ -11,23 +11,23 @@ set -euo pipefail
 # Activate haining group micromamba environments
 set +eu; source ~/.bashrc; set -eu
 mamba-haining
-cd "${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
 
 THREADS="${THREADS:-${SLURM_CPUS_PER_TASK:-6}}"
-mkdir -p results/qc/fastqc
+mkdir -p "$DATA/results/qc/fastqc"
 
 # gather every FASTQ produced by the download step
-mapfile -t FQS < <(find data/fastq -name '*_001.fastq.gz' | sort)
+mapfile -t FQS < <(find "$DATA/data/fastq" -name '*_001.fastq.gz' | sort)
 if [ "${#FQS[@]}" -eq 0 ]; then
-  echo "No FASTQ found under data/fastq — run 01_download_fastq.sh first"; exit 1
+  echo "No FASTQ found under $DATA/data/fastq — run 01_download_fastq.sh first"; exit 1
 fi
 echo "Running FastQC on ${#FQS[@]} files with $THREADS threads"
 
 # 1) per-file read-quality reports
-fastqc -t "$THREADS" -o results/qc/fastqc "${FQS[@]}"
+fastqc -t "$THREADS" -o "$DATA/results/qc/fastqc" "${FQS[@]}"
 
 # 2) aggregate all reports into ONE summary
-multiqc results/qc/fastqc -o results/qc -n multiqc_report --force
+multiqc "$DATA/results/qc/fastqc" -o "$DATA/results/qc" -n multiqc_report --force
 
 echo "Done -> open results/qc/multiqc_report.html"
 echo "For 10x: check R1 length (~28bp barcode+UMI) and R2 per-base quality."

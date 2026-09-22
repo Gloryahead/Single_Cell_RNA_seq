@@ -7,8 +7,11 @@
 project:
   name: GSE174609
   organism: human          # human | mouse (controls mito pattern and SingleR ref)
-  # All results/data written here (can be on xdisk):
-  outdir: /xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/results
+  # Code (scripts, config, envs) lives in $SCRNA_PROJECT (home):
+  #   /home/u11/maarowosegbe/Single_Cell_RNA_seq
+  # Data, references, containers, and all results live in $SCRNA_DATA (xdisk):
+  data_dir: /xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
+  outdir:   /xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/results
 
 seed: 42
 

@@ -6,7 +6,7 @@
 # Inputs  : results/objects/05_annotated.rds
 # Run     : Rscript code/objects_primer.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 cfg <- load_config()
 obj <- readRDS(obj_path(cfg, "05_annotated"))

@@ -5,7 +5,7 @@
 # In: results/objects/05_annotated.rds   Out: results/plots/spoke_scplotter_*.png
 # Run: Rscript code/spokes/viz_scplotter.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 suppressPackageStartupMessages(library(scplotter))
 cfg <- load_config(); set.seed(cfg$seed)

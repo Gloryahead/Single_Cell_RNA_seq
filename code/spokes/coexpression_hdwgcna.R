@@ -5,7 +5,7 @@
 # In: results/objects/05_annotated.rds   Out: results/objects/spoke_hdwgcna.rds
 # Run: Rscript code/spokes/coexpression_hdwgcna.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 suppressPackageStartupMessages({ library(hdWGCNA); library(WGCNA) })
 cfg <- load_config(); set.seed(cfg$seed)

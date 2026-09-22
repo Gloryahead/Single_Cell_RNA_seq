@@ -11,8 +11,8 @@ set -euo pipefail
 # Activate haining group micromamba environments
 set +eu; source ~/.bashrc; set -eu
 mamba-haining
-cd "${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
-mkdir -p results/logs data/fastq
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
+mkdir -p "$DATA/results/logs" "$DATA/data/fastq"
 
 # --- performance knobs ---
 # node-local scratch for fasterq-dump temp (NEVER /xdisk). Falls back sensibly.
@@ -54,13 +54,13 @@ download_one () {
     echo "[$ID] Could not ID R1/R2 by length — inspect manually"; rm -rf "$tmp"; return 1
   fi
 
-  # 4) compress straight into the final /xdisk location (one write to the shared FS)
-  mkdir -p "data/fastq/${ID}"
-  $ZIP -c "$R1" > "data/fastq/${ID}/${ID}_S1_L001_R1_001.fastq.gz"
-  $ZIP -c "$R2" > "data/fastq/${ID}/${ID}_S1_L001_R2_001.fastq.gz"
+  # 4) compress straight into the final xdisk location (one write to the shared FS)
+  mkdir -p "$DATA/data/fastq/${ID}"
+  $ZIP -c "$R1" > "$DATA/data/fastq/${ID}/${ID}_S1_L001_R1_001.fastq.gz"
+  $ZIP -c "$R2" > "$DATA/data/fastq/${ID}/${ID}_S1_L001_R2_001.fastq.gz"
 
   rm -rf "$tmp"                        # wipe node-local scratch
-  echo "[$ID] ready -> data/fastq/${ID}/"
+  echo "[$ID] ready -> $DATA/data/fastq/${ID}/"
 }
 
 for pair in "${PAIRS[@]}"; do

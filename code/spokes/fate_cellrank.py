@@ -10,7 +10,7 @@
 # ---------------------------------------------------------------------
 import os, yaml, scanpy as sc, cellrank as cr
 
-PROJECT = os.environ.get("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT = os.environ.get("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 os.chdir(PROJECT)
 cfg = yaml.safe_load(open("config.yaml"))
 out = cfg["project"]["outdir"]

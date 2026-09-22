@@ -7,7 +7,7 @@
 #           06_proportions.csv
 # Run     : Rscript code/06_dge_pathway.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 suppressPackageStartupMessages({
   library(DESeq2); library(fgsea); library(msigdbr); library(Matrix); library(speckle)

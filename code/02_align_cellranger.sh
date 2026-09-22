@@ -11,11 +11,11 @@ set -euo pipefail
 # Activate haining group micromamba environments
 set +eu; source ~/.bashrc; set -eu
 mamba-haining
-cd "${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
-mkdir -p results/logs results/counts
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
+mkdir -p "$DATA/results/logs" "$DATA/results/counts"
 
-REF=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/references/cellranger/refdata-gex-GRCh38-2024-A
-FASTQ_ROOT=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/data/fastq
+REF="$DATA/references/cellranger/refdata-gex-GRCh38-2024-A"
+FASTQ_ROOT="$DATA/data/fastq"
 CORES="${SLURM_CPUS_PER_TASK:-${SLURM_NTASKS:-16}}"
 
 IDS=(Healthy_1 Healthy_2 Healthy_3 Healthy_4
@@ -27,7 +27,7 @@ align_one () {
   echo "[$ID] aligning on $(hostname)"
   # cellranger writes its output dir into the CWD, so run from results/counts.
   # It refuses to overwrite an existing --id dir; remove a stale partial first.
-  ( cd results/counts
+  ( cd "$DATA/results/counts"
     rm -rf "$ID"
     cellranger count \
       --id="$ID" \
@@ -37,7 +37,7 @@ align_one () {
       --localcores="$CORES" --localmem=90 \
       --create-bam=true
   )
-  echo "[$ID] done -> results/counts/$ID/outs/filtered_feature_bc_matrix/"
+  echo "[$ID] done -> $DATA/results/counts/$ID/outs/filtered_feature_bc_matrix/"
 }
 
 # ---- run: all samples, or just the one passed as $1 ----

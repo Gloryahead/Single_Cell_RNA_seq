@@ -10,7 +10,7 @@
 # NOTE: Cell Ranger's filtered_feature_bc_matrix has ALREADY removed empty
 # droplets, so "pre-filter" below means "before OUR thresholds", not raw.
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 cfg <- load_config(); set.seed(cfg$seed)
 

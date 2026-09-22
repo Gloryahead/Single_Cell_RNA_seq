@@ -6,7 +6,7 @@
 # Outputs : results/objects/04_clustered.rds + UMAPs in results/plots/
 # Run     : Rscript code/04_cluster_integrate.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 cfg <- load_config(); set.seed(cfg$seed)
 cc  <- cfg$cluster

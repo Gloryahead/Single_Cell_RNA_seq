@@ -10,7 +10,7 @@
 #            or Xenome/XenoCell for read classification.
 # ---------------------------------------------------------------------
 set -euo pipefail
-PROJECT=${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
 ID=${1:?usage: 08_pdx_human_mouse.sh <SAMPLE_ID>}
 
 # Strategy: build/download a COMBINED human(GRCh38)+mouse(GRCm39) reference,
@@ -18,4 +18,4 @@ ID=${1:?usage: 08_pdx_human_mouse.sh <SAMPLE_ID>}
 # This dataset (GSE174609) is NOT PDX — this script is provided so the pipeline
 # covers Part 8 for when you move to xenograft data.
 echo "PDX split for $ID is a template — wire in your combined reference / Xenome step."
-echo "Output target: $PROJECT/data/fastq/${ID}_human/  -> then 02_align_cellranger.sh"
+echo "Output target: $DATA/data/fastq/${ID}_human/  -> then 02_align_cellranger.sh"

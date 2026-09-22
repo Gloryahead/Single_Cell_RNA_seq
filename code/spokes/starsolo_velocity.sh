@@ -7,21 +7,21 @@
 # Outputs: results/velocity/<sample>/Solo.out/
 # ---------------------------------------------------------------------
 set -euo pipefail
-cd "${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
 
 THREADS="${SLURM_CPUS_PER_TASK:-${SLURM_NTASKS:-16}}"
-STAR_REF="references/star_index_GRCh38"
-GTF="references/GRCh38/Homo_sapiens.GRCh38.110.gtf"
-FASTQ_ROOT="data/fastq"
-VEL_OUT="results/velocity"
-SW="software"
+STAR_REF="$DATA/references/star_index_GRCh38"
+GTF="$DATA/references/GRCh38/Homo_sapiens.GRCh38.110.gtf"
+FASTQ_ROOT="$DATA/data/fastq"
+VEL_OUT="$DATA/results/velocity"
+SW="$DATA/software"
 
-mkdir -p "$VEL_OUT" "references/GRCh38"
+mkdir -p "$VEL_OUT" "$DATA/references/GRCh38"
 
 # ── Step 1: Build STAR genome index (once) ────────────────────────────────────
 if [ ! -d "$STAR_REF" ]; then
   echo "Building STAR genome index (takes ~30 min)..."
-  GENOME_FA="references/GRCh38/GRCh38.primary_assembly.genome.fa"
+  GENOME_FA="$DATA/references/GRCh38/GRCh38.primary_assembly.genome.fa"
   if [ ! -f "$GENOME_FA" ]; then
     wget https://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz \
          -O "${GENOME_FA}.gz" && gunzip "${GENOME_FA}.gz"

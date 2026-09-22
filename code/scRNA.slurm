@@ -6,6 +6,7 @@
 
 #SBATCH --job-name=scRNA-seq
 #SBATCH --output=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/results/logs/%x-%j.out
+#SBATCH --error=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq/results/logs/%x-%j.err
 #SBATCH --account=haining
 #SBATCH --partition=standard
 #SBATCH --nodes=1
@@ -19,10 +20,11 @@
 
 echo "========== Job started: $(date) =========="
 
-# Project root — git repo cloned to xdisk so code and data share one root
-export SCRNA_PROJECT=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
-cd "$SCRNA_PROJECT"
-mkdir -p results/logs
+# Code (scripts, config, envs) lives in home; data and results live on xdisk.
+export SCRNA_PROJECT=/home/u11/maarowosegbe/Single_Cell_RNA_seq
+export SCRNA_DATA=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
+cd "$SCRNA_PROJECT"            # run from code root so ./code/... paths resolve
+mkdir -p "$SCRNA_DATA/results/logs"
 
 # Load micromamba shell functions, then switch to the haining group prefix
 # where the `scrna` (R) and `scrna-velocity` (Python) environments live.
@@ -30,7 +32,7 @@ set +eu; source ~/.bashrc; set -eu
 mamba-haining   # sets MAMBA_ROOT_PREFIX=/groups/haining/maarowosegbe/micromamba
 
 # Cell Ranger: installed once via code/00b_install_cellranger.sh
-source "$SCRNA_PROJECT/software/activate_cellranger.sh" 2>/dev/null || \
+source "$SCRNA_DATA/software/activate_cellranger.sh" 2>/dev/null || \
   echo "WARNING: activate_cellranger.sh not found — run 00b_install_cellranger.sh first"
 
 command -v cellranger >/dev/null && cellranger --version || \
@@ -54,7 +56,8 @@ run_R_if_exists() {
     local SCRIPT=$1
     if [[ -f "$SCRIPT" ]]; then
         echo "---------- Running R: $(basename $SCRIPT) ($(date)) ----------"
-        micromamba run -n scrna Rscript "$SCRIPT"
+        SCRNA_PROJECT="$SCRNA_PROJECT" SCRNA_DATA="$SCRNA_DATA" \
+          micromamba run -n scrna Rscript "$SCRIPT"
     else
         echo "WARNING: Script not found: $SCRIPT"
     fi
@@ -64,7 +67,8 @@ run_PY_if_exists() {
     local SCRIPT=$1
     if [[ -f "$SCRIPT" ]]; then
         echo "---------- Running Python: $(basename $SCRIPT) ($(date)) ----------"
-        micromamba run -n scrna-velocity python "$SCRIPT"
+        SCRNA_PROJECT="$SCRNA_PROJECT" SCRNA_DATA="$SCRNA_DATA" \
+          micromamba run -n scrna-velocity python "$SCRIPT"
     else
         echo "WARNING: Script not found: $SCRIPT"
     fi

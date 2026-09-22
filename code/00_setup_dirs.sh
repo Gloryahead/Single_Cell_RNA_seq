@@ -5,22 +5,21 @@
 # Run     : bash code/00_setup_dirs.sh
 # ---------------------------------------------------------------------
 set -euo pipefail
-PROJECT=${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}
-cd "$PROJECT"
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
 
-# SCRNA_PROJECT = git repo root AND xdisk data root (clone the repo to xdisk)
-mkdir -p data/fastq
-mkdir -p references/cellranger
-mkdir -p references/GRCh38
-mkdir -p references/star_index_GRCh38
-mkdir -p software
-mkdir -p results/counts
-mkdir -p results/qc
-mkdir -p results/objects
-mkdir -p results/tables
-mkdir -p results/plots
-mkdir -p results/logs
-mkdir -p results/velocity
+mkdir -p "$DATA/data/fastq"
+mkdir -p "$DATA/references/cellranger"
+mkdir -p "$DATA/references/GRCh38"
+mkdir -p "$DATA/references/star_index_GRCh38"
+mkdir -p "$DATA/software"
+mkdir -p "$DATA/containers"
+mkdir -p "$DATA/results/counts"
+mkdir -p "$DATA/results/qc"
+mkdir -p "$DATA/results/objects"
+mkdir -p "$DATA/results/tables"
+mkdir -p "$DATA/results/plots"
+mkdir -p "$DATA/results/logs"
+mkdir -p "$DATA/results/velocity"
 
-echo "Project skeleton ready under $PROJECT"
-find "$PROJECT" -maxdepth 2 -type d | sort
+echo "Data skeleton ready under $DATA"
+find "$DATA" -maxdepth 2 -type d | sort

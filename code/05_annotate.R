@@ -8,7 +8,7 @@
 # Outputs : results/objects/05_annotated.rds  (+ .h5ad for Python spokes)
 # Run     : Rscript code/05_annotate.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 cfg <- load_config(); set.seed(cfg$seed)
 

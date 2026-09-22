@@ -13,7 +13,7 @@ import numpy as np
 import scanpy as sc
 import scvelo as scv
 
-PROJECT = os.environ.get("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT = os.environ.get("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 os.chdir(PROJECT)
 cfg = yaml.safe_load(open("config.yaml"))
 out = cfg["project"]["outdir"]
@@ -26,7 +26,7 @@ adata = sc.read_h5ad(f"{out}/objects/05_annotated.h5ad")
 
 # Load and merge STARsolo Velocyto output (spliced/unspliced/ambiguous)
 samples = cfg.get("samples", [])
-vel_dir = "results/velocity"
+vel_dir = f"{out}/velocity"
 adatas = []
 for s in samples:
     sid = s["id"]

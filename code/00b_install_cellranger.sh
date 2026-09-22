@@ -7,7 +7,8 @@
 # it lives beside the scrna env and is prepended to PATH via a sourced snippet.
 #
 # ONE-TIME SETUP (interactive session on a compute node — NOT the login node):
-#   export SCRNA_PROJECT=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
+#   export SCRNA_PROJECT=/home/u11/maarowosegbe/Single_Cell_RNA_seq
+#   export SCRNA_DATA=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
 #   bash $SCRNA_PROJECT/code/00b_install_cellranger.sh
 # NOTE: the signed CR_URL below EXPIRES. If you see "Access Denied", regenerate
 #       it from https://www.10xgenomics.com/support/software/cell-ranger/downloads
@@ -15,11 +16,11 @@
 # ---------------------------------------------------------------------
 set -euo pipefail
 
-PROJECT="${SCRNA_PROJECT:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
-cd "$PROJECT"
+PROJECT="${SCRNA_PROJECT:-/home/u11/maarowosegbe/Single_Cell_RNA_seq}"
+DATA="${SCRNA_DATA:-/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq}"
 
 VERSION="10.1.0"
-SW="$PROJECT/software"
+SW="$DATA/software"
 DEST="$SW/cellranger-${VERSION}"
 mkdir -p "$SW"
 
@@ -48,4 +49,4 @@ export PATH="${DEST}:\$PATH"
 ACT
 echo
 echo "Installed. In your SLURM job, AFTER 'micromamba activate scrna', add:"
-echo "    source \"\${SCRNA_PROJECT:-$PROJECT}/software/activate_cellranger.sh\""
+echo "    source \"\${SCRNA_DATA:-$DATA}/software/activate_cellranger.sh\""

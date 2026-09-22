@@ -5,7 +5,7 @@
 # In: results/objects/05_annotated.rds   Out: results/objects/spoke_monocle3.rds
 # Run: Rscript code/spokes/trajectory_monocle3.R
 # ---------------------------------------------------------------------
-PROJECT <- Sys.getenv("SCRNA_PROJECT", "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 suppressPackageStartupMessages({ library(monocle3); library(SeuratWrappers) })
 cfg <- load_config(); set.seed(cfg$seed)

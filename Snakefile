@@ -16,24 +16,25 @@ import yaml, os
 # ── Config & paths ────────────────────────────────────────────────────────────
 cfg  = yaml.safe_load(open("config.yaml"))
 OUT  = cfg["project"]["outdir"]
-PROJ = os.environ.get("SCRNA_PROJECT",
-                      "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
+# Code (scripts, config, envs) lives in home; all data/results live on xdisk.
+CODE = os.environ.get("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
+DATA = os.environ.get("SCRNA_DATA",    "/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq")
 
 SAMPLES  = [s["id"] for s in cfg["samples"]]
 HEALTHY  = [s["id"] for s in cfg["samples"] if s["condition"] == "Healthy"]
 POST     = [s["id"] for s in cfg["samples"] if s["condition"] == "Post"]
 VEL_SAMP = HEALTHY + POST      # samples to run STARsolo on (for velocity)
 
-# Container paths (only used with --use-singularity)
-R_SIF  = f"{PROJ}/containers/scrna_r.sif"
-PY_SIF = f"{PROJ}/containers/scrna_python.sif"
+# Container SIF files are large — store on xdisk, not in home
+R_SIF  = f"{DATA}/containers/scrna_r.sif"
+PY_SIF = f"{DATA}/containers/scrna_python.sif"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def rscript(script):
-    return f"SCRNA_PROJECT={PROJ} Rscript {script}"
+    return f"SCRNA_PROJECT={CODE} SCRNA_DATA={DATA} Rscript {script}"
 
 def pyscript(script):
-    return f"SCRNA_PROJECT={PROJ} python {script}"
+    return f"SCRNA_PROJECT={CODE} SCRNA_DATA={DATA} python {script}"
 
 # ── Master target ─────────────────────────────────────────────────────────────
 rule all:
@@ -59,12 +60,12 @@ rule all:
 # ── Part 1: Cell Ranger alignment ─────────────────────────────────────────────
 rule cellranger_count:
     input:
-        r1 = f"{PROJ}/data/fastq/{{sample}}/{{sample}}_S1_L001_R1_001.fastq.gz",
-        r2 = f"{PROJ}/data/fastq/{{sample}}/{{sample}}_S1_L001_R2_001.fastq.gz",
+        r1 = f"{DATA}/data/fastq/{{sample}}/{{sample}}_S1_L001_R1_001.fastq.gz",
+        r2 = f"{DATA}/data/fastq/{{sample}}/{{sample}}_S1_L001_R2_001.fastq.gz",
     output:
         directory(f"{OUT}/counts/{{sample}}/outs/filtered_feature_bc_matrix"),
     params:
-        ref = f"{PROJ}/references/cellranger/refdata-gex-GRCh38-2024-A",
+        ref = f"{DATA}/references/cellranger/refdata-gex-GRCh38-2024-A",
         out = f"{OUT}/counts",
     resources:
         mem_mb   = 110000,
@@ -73,13 +74,13 @@ rule cellranger_count:
     # Cell Ranger is NOT containerised (10x license restriction)
     shell:
         """
-        source {PROJ}/software/activate_cellranger.sh
+        source {DATA}/software/activate_cellranger.sh
         cd {params.out}
         rm -rf {wildcards.sample}
         cellranger count \
           --id={wildcards.sample} \
           --transcriptome={params.ref} \
-          --fastqs={PROJ}/data/fastq/{wildcards.sample} \
+          --fastqs={DATA}/data/fastq/{wildcards.sample} \
           --sample={wildcards.sample} \
           --localcores={resources.cpus_per_task} \
           --localmem=105 \
@@ -213,14 +214,14 @@ rule hdwgcna:
 # ── Part 13: STARsolo (per sample) ────────────────────────────────────────────
 rule starsolo:
     input:
-        r1 = f"{PROJ}/data/fastq/{{sample}}/{{sample}}_S1_L001_R1_001.fastq.gz",
-        r2 = f"{PROJ}/data/fastq/{{sample}}/{{sample}}_S1_L001_R2_001.fastq.gz",
+        r1 = f"{DATA}/data/fastq/{{sample}}/{{sample}}_S1_L001_R1_001.fastq.gz",
+        r2 = f"{DATA}/data/fastq/{{sample}}/{{sample}}_S1_L001_R2_001.fastq.gz",
     output:
         directory(f"{OUT}/velocity/{{sample}}/Solo.out"),
     params:
-        ref      = f"{PROJ}/references/star_index_GRCh38",
-        gtf      = f"{PROJ}/references/GRCh38/Homo_sapiens.GRCh38.110.gtf",
-        wl       = f"{PROJ}/software/3M-february-2018.txt",
+        ref      = f"{DATA}/references/star_index_GRCh38",
+        gtf      = f"{DATA}/references/GRCh38/Homo_sapiens.GRCh38.110.gtf",
+        wl       = f"{DATA}/software/3M-february-2018.txt",
         out_pref = f"{OUT}/velocity/{{sample}}/",
     resources:
         mem_mb   = 80000,
