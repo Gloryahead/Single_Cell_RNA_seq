@@ -25,7 +25,7 @@ DEST="$SW/cellranger-${VERSION}"
 mkdir -p "$SW"
 
 # signed URL from the 10x download page (expires — refresh if it fails):
-CR_URL="https://cf.10xgenomics.com/releases/cell-exp/cellranger-10.1.0.tar.gz?Expires=1783421771&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=H8TuEmLDMqVxEGscxo5J04uWnpEKAhX5PgPPBUFrby6kudJWvH03Axg1SIeMmSJ88oGyXks1LlIWpI-QqyBgvJ~PLGabR6jmLwllASFP07y68vRh62zFNm4xcTNVkKZjUbtm-ymRLtdy6UTH9JiR3ZkYW50IPiQ4LJEWMWpQH9fyeJwjxkQ-NKkau3KHdnWwunnQCZDlmikzlPMw2sao1-ASm-Tvc8gak6YP3IenYdjuF7yEuRP3yXHt5mJ1Y8cg4l40sXnjJugW3IZOD2jvpFkaBPFSxsyXCXGrHkVjdTsezrySG6NOxLwyieR3FpxNo2x9PRmehBwKB6IBtkSdcA__"
+CR_URL="https://cf.10xgenomics.com/releases/cell-exp/cellranger-10.1.0.tar.gz?Expires=1790164870&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=DpPd91mIuiNfKqsav9~TKCFxjAH~bNeIA-Ojg6XvMsuhpZlO99TUTm~OK-Ze~BvnmhlY4rWCbYySR72NAOpBnSNRuFAxNUWdV2txoX8pUkYzF7XDHoLBn3kdb4XNTXfs6t0iUCAxzM2uxyZe34z3Lb~PPMn3zMCHrpBDKp4116ErKlodw-xY34Z~8je5x8dlng9L~Kkb9pJsJpx4Zh~7gWGz4OKRPx7mqvwbWt04mm83xOgqGp3AEPDN78Te-1xegusrDVUYradejngev-vafRn3KAgtLTR~DLDcGMe9WT5qH10Vr8iDhXSbW750aT06XfWbaVU1F~rEqkAsQbhOdQ__"
 
 if [[ -x "$DEST/cellranger" ]]; then
   echo "Cell Ranger already installed at $DEST"
