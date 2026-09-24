@@ -5,15 +5,14 @@
 #SBATCH --account=haining
 #SBATCH --partition=standard
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=8gb
+#SBATCH --ntasks=8
 #SBATCH --time=24:00:00
 
 echo "========== Job started at: $(date) =========="
 
 export SCRNA_PROJECT=/home/u11/maarowosegbe/Single_Cell_RNA_seq
 export SCRNA_DATA=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
-export THREADS=${SLURM_CPUS_PER_TASK}
+export THREADS=${SLURM_NTASKS}
 
 echo "Code root : $SCRNA_PROJECT"
 echo "Data root : $SCRNA_DATA"
