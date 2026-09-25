@@ -5,7 +5,7 @@
 #SBATCH --account=haining
 #SBATCH --partition=standard
 #SBATCH --nodes=1
-#SBATCH --ntasks=24
+#SBATCH --ntasks=32
 #SBATCH --time=24:00:00
 
 echo "========== Job started at: $(date) =========="
@@ -15,7 +15,7 @@ export SCRNA_DATA=/xdisk/haining/maarowosegbe/Single_Cell_RNA_seq
 
 echo "Code root : $SCRNA_PROJECT"
 echo "Data root : $SCRNA_DATA"
-echo "Cores     : $SLURM_NTASKS"
+echo "Cores     : $SLURM_NTASKS  (~160 GB allocated on Puma standard nodes)"
 
 # Activate haining micromamba prefix, then put Cell Ranger on PATH
 set +eu
