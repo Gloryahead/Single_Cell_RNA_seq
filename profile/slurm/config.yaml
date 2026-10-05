@@ -21,6 +21,4 @@ retries: 1
 # (needed on shared filesystems like xdisk where writes can lag)
 latency-wait: 60
 
-# Print the reason each rule is being run
-reason: true
 printshellcmds: true
