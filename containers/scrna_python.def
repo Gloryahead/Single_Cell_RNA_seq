@@ -18,8 +18,8 @@ From: mambaorg/micromamba:1.5.8
 
 %environment
     export MAMBA_ROOT_PREFIX=/opt/conda
-    eval "$(micromamba shell hook --shell bash)"
-    micromamba activate scrna-velocity
+    export PATH=/opt/conda/envs/scrna-velocity/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/conda/envs/scrna-velocity/lib:${LD_LIBRARY_PATH:-}
 
 %runscript
     exec python "$@"
