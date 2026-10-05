@@ -22,11 +22,11 @@ echo "Data root : $SCRNA_DATA"
 
 cd "$SCRNA_PROJECT"
 
-# Activate haining micromamba prefix, then the scrna env for snakemake
+# Activate haining micromamba prefix, then the existing snakemake_env
 set +eu
 source ~/.bashrc
 mamba-haining
-micromamba activate scrna
+micromamba activate snakemake_env
 set -eu
 
 echo "Snakemake: $(snakemake --version)"
