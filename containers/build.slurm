@@ -26,7 +26,7 @@ echo "=========================================="
 echo " Building R container"
 echo " Started: $(date)"
 echo "=========================================="
-apptainer build --fakeroot \
+apptainer build --fakeroot --force \
   "$SCRNA_DATA/containers/scrna_r.sif" \
   "$SCRNA_PROJECT/containers/scrna_r.def"
 echo " Finished R container: $(date)"
@@ -39,7 +39,7 @@ echo "=========================================="
 echo " Building Python container"
 echo " Started: $(date)"
 echo "=========================================="
-apptainer build --fakeroot \
+apptainer build --fakeroot --force \
   "$SCRNA_DATA/containers/scrna_python.sif" \
   "$SCRNA_PROJECT/containers/scrna_python.def"
 echo " Finished Python container: $(date)"
