@@ -34,17 +34,39 @@ WL_DEST="${SCRNA_DATA}/software/3M-february-2018.txt"
 if [[ -f "${WL_DEST}" ]]; then
     echo "Whitelist already present — skipping."
 else
-    # Cell Ranger 10.x stores it gzipped inside the installation
-    WL_GZ="${SCRNA_DATA}/software/cellranger-10.1.0/lib/python/cellranger/barcodes/3M-february-2018.txt.gz"
-    if [[ -f "${WL_GZ}" ]]; then
-        echo "Extracting whitelist from Cell Ranger installation..."
-        zcat "${WL_GZ}" > "${WL_DEST}"
+    CR_DIR="${SCRNA_DATA}/software/cellranger-10.1.0"
+
+    # Cell Ranger 10.x may store barcodes in several places — search broadly
+    WL_FOUND=$(find "${CR_DIR}" \
+        \( -name "3M-february-2018.txt.gz" \
+           -o -name "3M-february-2018.txt" \) \
+        2>/dev/null | head -1)
+
+    if [[ -n "${WL_FOUND}" ]]; then
+        echo "Found whitelist in Cell Ranger: ${WL_FOUND}"
+        if [[ "${WL_FOUND}" == *.gz ]]; then
+            zcat "${WL_FOUND}" > "${WL_DEST}"
+        else
+            cp "${WL_FOUND}" "${WL_DEST}"
+        fi
     else
-        echo "Not found in Cell Ranger — downloading from 10x Genomics..."
-        curl -fL \
-            "https://cf.10xgenomics.com/supp/cell-exp/3M-february-2018.txt.gz" \
-          | zcat > "${WL_DEST}"
+        echo "Not found in Cell Ranger installation."
+        echo ""
+        echo "Please manually obtain the whitelist and place it at:"
+        echo "  ${WL_DEST}"
+        echo ""
+        echo "Options:"
+        echo "  1. Find it in the Cell Ranger install:"
+        echo "       find ${CR_DIR} -name '3M-february-2018*' 2>/dev/null"
+        echo "  2. Download after signing in at https://support.10xgenomics.com/"
+        echo "     (search for '3M-february-2018.txt.gz')"
+        echo "  3. Copy from another Cell Ranger install on the cluster:"
+        echo "       find /groups /xdisk -name '3M-february-2018.txt.gz' 2>/dev/null | head -5"
+        echo ""
+        echo "After placing the file, re-run: sbatch code/02b_build_star_index.slurm"
+        exit 1
     fi
+    wc -l "${WL_DEST}"
     echo "Whitelist ready: ${WL_DEST}"
 fi
 
