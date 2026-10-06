@@ -61,7 +61,7 @@ else
         echo "  2. Download after signing in at https://support.10xgenomics.com/"
         echo "     (search for '3M-february-2018.txt.gz')"
         echo "  3. Copy from another Cell Ranger install on the cluster:"
-        echo "       find /groups /xdisk -name '3M-february-2018.txt.gz' 2>/dev/null | head -5"
+        echo "       find /groups/haining /xdisk/haining -name '3M-february-2018.txt.gz' 2>/dev/null | head -5"
         echo ""
         echo "After placing the file, re-run: sbatch code/02b_build_star_index.slurm"
         exit 1
