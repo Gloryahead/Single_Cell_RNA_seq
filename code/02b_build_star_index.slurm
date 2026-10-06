@@ -36,10 +36,12 @@ if [[ -f "${WL_DEST}" ]]; then
 else
     CR_DIR="${SCRNA_DATA}/software/cellranger-10.1.0"
 
-    # Cell Ranger 10.x may store barcodes in several places — search broadly
+    # Cell Ranger 10.x renamed the file with a _TRU suffix — search for both variants
     WL_FOUND=$(find "${CR_DIR}" \
         \( -name "3M-february-2018.txt.gz" \
-           -o -name "3M-february-2018.txt" \) \
+           -o -name "3M-february-2018.txt" \
+           -o -name "3M-february-2018_TRU.txt.gz" \) \
+        ! -path "*/translation/*" \
         2>/dev/null | head -1)
 
     if [[ -n "${WL_FOUND}" ]]; then
