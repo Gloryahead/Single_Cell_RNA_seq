@@ -121,8 +121,8 @@ rule annotate:
         rds  = f"{OUT}/objects/05_annotated.rds",
         h5ad = f"{OUT}/objects/05_annotated.h5ad",
     resources:
-        mem_mb   = 65536,
-        runtime  = 120,
+        mem_mb   = 131072,   # 128 GB; FindMarkers on 100K+ cells OOMs at 64 GB
+        runtime  = 240,
         cpus_per_task = 8,
     singularity: R_SIF
     shell:
@@ -237,7 +237,6 @@ rule starsolo:
           --soloCBstart 1 --soloCBlen 16 \
           --soloUMIstart 17 --soloUMIlen 12 \
           --soloFeatures Gene Velocyto \
-          --soloOutDir {params.out_pref}/Solo.out \
           --soloOutFormatFeaturesGeneField3 "Gene Expression" \
           --genomeDir {params.ref} \
           --sjdbGTFfile {params.gtf} \
