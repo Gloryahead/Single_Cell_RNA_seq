@@ -62,7 +62,8 @@ pbmc_markers <- pbmc_markers[pbmc_markers %in% rownames(obj)]
 ggsave(out_path(cfg, "plots", "05_marker_dotplot.png"),
        DotPlot(obj, features = pbmc_markers) + RotatedAxis(), width = 12, height = 6)
 
-markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25,
+                          max.cells.per.ident = 500)
 write.csv(markers, out_path(cfg, "tables", "05_cluster_markers.csv"), row.names = FALSE)
 
 # ---- save the canonical hub object (+ AnnData copy for velocity/fate) ----
