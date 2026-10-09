@@ -121,9 +121,10 @@ rule annotate:
         rds  = f"{OUT}/objects/05_annotated.rds",
         h5ad = f"{OUT}/objects/05_annotated.h5ad",
     resources:
-        mem_mb   = 262144,   # 256 GB; saveRDS+export_h5ad on 106K cells OOMs at 128 GB
-        runtime  = 240,
+        mem_mb      = 262144,   # 256 GB; sceasy h5ad conversion on 106K cells
+        runtime     = 240,
         cpus_per_task = 8,
+        slurm_extra = "'--exclusive'",   # sole tenant of node → full 512 GB available
     singularity: R_SIF
     shell:
         rscript("code/05_annotate.R")

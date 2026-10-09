@@ -65,9 +65,11 @@ ggsave(out_path(cfg, "plots", "05_marker_dotplot.png"),
 markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25,
                           max.cells.per.ident = 500)
 write.csv(markers, out_path(cfg, "tables", "05_cluster_markers.csv"), row.names = FALSE)
+rm(markers); gc()   # free marker table before large save/export operations
 
 # ---- save the canonical hub object (+ AnnData copy for velocity/fate) ----
 saveRDS(obj, obj_path(cfg, "05_annotated"))
+gc()                # free saveRDS serialisation buffer before sceasy conversion
 export_h5ad(obj, out_path(cfg, "objects", "05_annotated.h5ad"))
 ggsave(out_path(cfg, "plots", "05_umap_celltypes.png"),
        DimPlot(obj, label = TRUE), width = 7, height = 6)
