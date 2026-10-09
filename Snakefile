@@ -118,13 +118,13 @@ rule integrate_cluster:
 rule annotate:
     input:  f"{OUT}/objects/04_clustered.rds"
     output:
-        rds  = f"{OUT}/objects/05_annotated.rds",
-        h5ad = f"{OUT}/objects/05_annotated.h5ad",
+        rds      = f"{OUT}/objects/05_annotated.rds",
+        meta_csv = f"{OUT}/objects/05_annotated_meta.csv",
+        umap_csv = f"{OUT}/objects/05_annotated_umap.csv",
     resources:
-        mem_mb      = 262144,   # 256 GB; sceasy h5ad conversion on 106K cells
+        mem_mb      = 65536,
         runtime     = 240,
         cpus_per_task = 8,
-        slurm_extra = "'--exclusive'",   # sole tenant of node → full 512 GB available
     singularity: R_SIF
     shell:
         rscript("code/05_annotate.R")
@@ -253,7 +253,8 @@ rule starsolo:
 # ── Part 13: scVelo ───────────────────────────────────────────────────────────
 rule scvelo:
     input:
-        h5ad    = f"{OUT}/objects/05_annotated.h5ad",
+        meta_csv = f"{OUT}/objects/05_annotated_meta.csv",
+        umap_csv = f"{OUT}/objects/05_annotated_umap.csv",
         starsolo = expand(f"{OUT}/velocity/{{sample}}/Solo.out",
                           sample=VEL_SAMP),
     output: f"{OUT}/objects/spoke_velocity.h5ad"

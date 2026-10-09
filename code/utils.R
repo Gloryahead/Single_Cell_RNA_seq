@@ -53,9 +53,17 @@ run_soupx <- function(filtered_dir, raw_dir) {
   adjustCounts(sc)
 }
 
-# ---- export hub object to AnnData for the Python spokes ---------------
-export_h5ad <- function(obj, path) {
-  if (requireNamespace("sceasy", quietly = TRUE)) {
-    sceasy::convertFormat(obj, from = "seurat", to = "anndata", outFile = path)
-  } else message("Install sceasy (or SeuratDisk) to export .h5ad; skipping.")
+# ---- export hub metadata for the Python velocity/fate spokes -----------
+# Tutorial approach (ngs101.com Part 13): write two small CSVs from R;
+# Python builds AnnData from STARsolo matrices and joins these.
+# Avoids sceasy/reticulate which duplicates the full object in memory.
+export_meta_for_velocity <- function(obj, cfg) {
+  meta <- obj@meta.data
+  meta$barcode <- rownames(meta)
+  write.csv(meta, out_path(cfg, "objects", "05_annotated_meta.csv"), row.names = FALSE)
+
+  umap <- as.data.frame(Embeddings(obj, reduction = "umap"))
+  umap$barcode <- rownames(umap)
+  colnames(umap)[1:2] <- c("UMAP_1", "UMAP_2")
+  write.csv(umap, out_path(cfg, "objects", "05_annotated_umap.csv"), row.names = FALSE)
 }

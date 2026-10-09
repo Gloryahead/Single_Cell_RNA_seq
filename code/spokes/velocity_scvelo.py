@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 # ---------------------------------------------------------------------
 # velocity_scvelo.py — RNA velocity (scVelo).                     (Part 13)
-# Python spoke: reads the .h5ad the hub exported (05_annotated.h5ad).
+# Tutorial approach (ngs101.com Part 13): R exports metadata + UMAP as
+# CSVs; this script builds AnnData from STARsolo Velocyto matrices and
+# joins those CSVs. No h5ad from R needed — eliminates the sceasy OOM.
 # Env: micromamba activate scrna-velocity
-# PREREQ: spliced/unspliced layers. Cell Ranger alone does NOT give these —
-#         run velocyto on the BAM, or align with STARsolo --soloFeatures Velocyto,
-#         then merge that loom into this AnnData.
+# PREREQ: STARsolo --soloFeatures Velocyto outputs
 # Run: python code/spokes/velocity_scvelo.py
 # ---------------------------------------------------------------------
-import os, glob, yaml
+import os, yaml
 import numpy as np
+import pandas as pd
+import anndata as ad
 import scanpy as sc
 import scvelo as scv
+from scipy.sparse import csr_matrix
+from scipy.io import mmread
 
 PROJECT = os.environ.get("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 os.chdir(PROJECT)
@@ -21,45 +25,50 @@ os.makedirs(f"{out}/objects", exist_ok=True)
 os.makedirs(f"{out}/plots", exist_ok=True)
 scv.settings.set_figure_params("scvelo")
 
-# Load the hub AnnData (exported by 05_annotate.R)
-adata = sc.read_h5ad(f"{out}/objects/05_annotated.h5ad")
+# Load Seurat metadata and UMAP exported by 05_annotate.R
+meta_df = pd.read_csv(f"{out}/objects/05_annotated_meta.csv", index_col="barcode")
+umap_df = pd.read_csv(f"{out}/objects/05_annotated_umap.csv", index_col="barcode")
 
-# Load and merge STARsolo Velocyto output (spliced/unspliced/ambiguous)
+# Load STARsolo Velocyto outputs (spliced / unspliced / ambiguous)
 samples = cfg.get("samples", [])
+VEL_COND = {"Healthy", "Post"}
 vel_dir = f"{out}/velocity"
-adatas = []
+ldata_list = []
 for s in samples:
+    if s.get("condition") not in VEL_COND:
+        continue
     sid = s["id"]
     sp_path = f"{vel_dir}/{sid}/Solo.out/Velocyto/filtered"
     if not os.path.isdir(sp_path):
-        print(f"  STARsolo output missing for {sid}: {sp_path} — skipping")
+        print(f"  STARsolo Velocyto output missing for {sid}: {sp_path} — skipping")
         continue
-    a = sc.read_mtx(f"{sp_path}/spliced.mtx").T
-    genes = open(f"{sp_path}/features.tsv").read().splitlines()
+    genes    = open(f"{sp_path}/features.tsv").read().splitlines()
     barcodes = [f"{sid}_{b}" for b in open(f"{sp_path}/barcodes.tsv").read().splitlines()]
+    sp = csr_matrix(mmread(f"{sp_path}/spliced.mtx").T)
+    un = csr_matrix(mmread(f"{sp_path}/unspliced.mtx").T)
+    am = csr_matrix(mmread(f"{sp_path}/ambiguous.mtx").T)
+    a = ad.AnnData(X=sp)
     a.var_names = genes
     a.obs_names = barcodes
-    u = sc.read_mtx(f"{sp_path}/unspliced.mtx").T
-    u.var_names = genes; u.obs_names = barcodes
-    am = sc.read_mtx(f"{sp_path}/ambiguous.mtx").T
-    am.var_names = genes; am.obs_names = barcodes
-    a.layers["spliced"] = a.X
-    a.layers["unspliced"] = u.X
-    a.layers["ambiguous"] = am.X
-    adatas.append(a)
+    a.layers["spliced"]   = sp
+    a.layers["unspliced"] = un
+    a.layers["ambiguous"] = am
+    ldata_list.append(a)
 
-if not adatas:
-    raise RuntimeError("No STARsolo outputs found. Run starsolo_velocity.sh first.")
+if not ldata_list:
+    raise RuntimeError("No STARsolo Velocyto outputs found. Run starsolo first.")
 
-ldata = adatas[0].concatenate(adatas[1:]) if len(adatas) > 1 else adatas[0]
+ldata = ad.concat(ldata_list, join="inner") if len(ldata_list) > 1 else ldata_list[0]
 
-# Keep only barcodes present in the hub Seurat object
-common = adata.obs_names.intersection(ldata.obs_names)
-adata = adata[common].copy()
-ldata = ldata[common].copy()
-adata.layers["spliced"] = ldata[common].layers["spliced"]
-adata.layers["unspliced"] = ldata[common].layers["unspliced"]
-adata.layers["ambiguous"] = ldata[common].layers["ambiguous"]
+# Keep only barcodes present in the Seurat object (survived QC + annotation)
+shared = meta_df.index.intersection(ldata.obs_names)
+if len(shared) == 0:
+    raise RuntimeError("No shared barcodes between STARsolo output and Seurat metadata.")
+print(f"Shared barcodes: {len(shared)}")
+
+adata = ldata[shared].copy()
+adata.obs = meta_df.loc[shared]
+adata.obsm["X_umap"] = umap_df.loc[shared, ["UMAP_1", "UMAP_2"]].values
 
 scv.pp.filter_and_normalize(adata, min_shared_counts=20, n_top_genes=2000)
 scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
