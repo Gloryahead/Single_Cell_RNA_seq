@@ -122,7 +122,7 @@ rule annotate:
         meta_csv = f"{OUT}/objects/05_annotated_meta.csv",
         umap_csv = f"{OUT}/objects/05_annotated_umap.csv",
     resources:
-        mem_mb      = 65536,
+        mem_mb      = 131072,   # 128 GB: SingleR + FindAllMarkers + saveRDS (no sceasy)
         runtime     = 240,
         cpus_per_task = 8,
     singularity: R_SIF
