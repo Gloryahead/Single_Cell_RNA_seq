@@ -121,7 +121,7 @@ rule annotate:
         rds  = f"{OUT}/objects/05_annotated.rds",
         h5ad = f"{OUT}/objects/05_annotated.h5ad",
     resources:
-        mem_mb   = 131072,   # 128 GB; FindMarkers on 100K+ cells OOMs at 64 GB
+        mem_mb   = 262144,   # 256 GB; saveRDS+export_h5ad on 106K cells OOMs at 128 GB
         runtime  = 240,
         cpus_per_task = 8,
     singularity: R_SIF
