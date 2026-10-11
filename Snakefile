@@ -68,9 +68,9 @@ rule cellranger_count:
         ref = f"{DATA}/references/cellranger/refdata-gex-GRCh38-2024-A",
         out = f"{OUT}/counts",
     resources:
-        mem_mb   = 110000,
-        runtime  = 1440,    # 24 h
-        cpus_per_task = 16,
+        cpus_per_task = 22,
+        mem_mb        = 112640,  # 22 × 5120 MB = 110 GB (matches --localmem=105)
+        runtime       = 1440,    # 24 h
     # Cell Ranger is NOT containerised (10x license restriction)
     shell:
         """
@@ -95,9 +95,9 @@ rule qc_filter:
     output:
         f"{OUT}/objects/03_filtered.rds",
     resources:
-        mem_mb   = 65536,
-        runtime  = 120,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 120,
     singularity: R_SIF
     shell:
         rscript("code/03_qc_filter.R")
@@ -107,9 +107,9 @@ rule integrate_cluster:
     input:  f"{OUT}/objects/03_filtered.rds"
     output: f"{OUT}/objects/04_clustered.rds"
     resources:
-        mem_mb   = 65536,
-        runtime  = 120,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 120,
     singularity: R_SIF
     shell:
         rscript("code/04_cluster_integrate.R")
@@ -122,9 +122,9 @@ rule annotate:
         meta_csv = f"{OUT}/objects/05_annotated_meta.csv",
         umap_csv = f"{OUT}/objects/05_annotated_umap.csv",
     resources:
-        mem_mb      = 131072,   # 128 GB: SingleR + FindAllMarkers + saveRDS (no sceasy)
-        runtime     = 240,
-        cpus_per_task = 8,
+        cpus_per_task = 20,
+        mem_mb        = 102400,  # 20 × 5120 MB = 100 GB (SingleR GC'd + FindAllMarkers + saveRDS)
+        runtime       = 240,
     singularity: R_SIF
     shell:
         rscript("code/05_annotate.R")
@@ -134,9 +134,9 @@ rule dge_pathway:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/06_de_post_vs_healthy.csv"
     resources:
-        mem_mb   = 65536,
-        runtime  = 180,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 180,
     singularity: R_SIF
     shell:
         rscript("code/06_dge_pathway.R")
@@ -146,9 +146,9 @@ rule monocle3:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_monocle3.rds"
     resources:
-        mem_mb   = 65536,
-        runtime  = 120,
-        cpus_per_task = 4,
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 120,
     singularity: R_SIF
     shell:
         rscript("code/spokes/trajectory_monocle3.R")
@@ -157,9 +157,9 @@ rule slingshot:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_slingshot.rds"
     resources:
-        mem_mb   = 32768,
-        runtime  = 60,
         cpus_per_task = 4,
+        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        runtime       = 60,
     singularity: R_SIF
     shell:
         rscript("code/spokes/trajectory_slingshot.R")
@@ -169,9 +169,9 @@ rule cellchat:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_cellchat.rds"
     resources:
-        mem_mb   = 65536,
-        runtime  = 240,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 240,
     singularity: R_SIF
     shell:
         rscript("code/spokes/ccc_cellchat.R")
@@ -181,9 +181,9 @@ rule nichenet:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_nichenet_ligands.csv"
     resources:
-        mem_mb   = 65536,
-        runtime  = 240,
-        cpus_per_task = 4,
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 240,
     singularity: R_SIF
     shell:
         rscript("code/spokes/ccc_nichenet.R")
@@ -193,9 +193,9 @@ rule copykat:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_copykat.rds"
     resources:
-        mem_mb   = 65536,
-        runtime  = 360,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 360,
     singularity: R_SIF
     shell:
         rscript("code/spokes/cnv_copykat.R")
@@ -205,9 +205,9 @@ rule hdwgcna:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_hdwgcna.rds"
     resources:
-        mem_mb   = 65536,
-        runtime  = 240,
-        cpus_per_task = 4,
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 240,
     singularity: R_SIF
     shell:
         rscript("code/spokes/coexpression_hdwgcna.R")
@@ -225,9 +225,9 @@ rule starsolo:
         wl       = f"{DATA}/software/3M-february-2018.txt",
         out_pref = f"{OUT}/velocity/{{sample}}/",
     resources:
-        mem_mb   = 80000,
-        runtime  = 480,
         cpus_per_task = 16,
+        mem_mb        = 81920,   # 16 × 5120 MB = 80 GB
+        runtime       = 480,
     singularity: R_SIF   # STAR is in the R env
     shell:
         """
@@ -259,9 +259,9 @@ rule scvelo:
                           sample=VEL_SAMP),
     output: f"{OUT}/objects/spoke_velocity.h5ad"
     resources:
-        mem_mb   = 65536,
-        runtime  = 360,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 360,
     singularity: PY_SIF
     shell:
         pyscript("code/spokes/velocity_scvelo.py")
@@ -271,9 +271,9 @@ rule cellrank:
     input:  f"{OUT}/objects/spoke_velocity.h5ad"
     output: f"{OUT}/objects/spoke_cellrank.h5ad"
     resources:
-        mem_mb   = 65536,
-        runtime  = 240,
         cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        runtime       = 240,
     singularity: PY_SIF
     shell:
         pyscript("code/spokes/fate_cellrank.py")
@@ -283,9 +283,9 @@ rule scplotter:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/plots/spoke_scplotter_umap.png"
     resources:
-        mem_mb   = 32768,
-        runtime  = 60,
         cpus_per_task = 4,
+        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        runtime       = 60,
     singularity: R_SIF
     shell:
         rscript("code/spokes/viz_scplotter.R")
@@ -295,9 +295,9 @@ rule decoupler:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_tf_activity.csv"
     resources:
-        mem_mb   = 32768,
-        runtime  = 60,
         cpus_per_task = 4,
+        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        runtime       = 60,
     singularity: R_SIF
     shell:
         rscript("code/spokes/grn_decoupler.R")
@@ -307,9 +307,9 @@ rule progeny:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_pathway_activity.csv"
     resources:
-        mem_mb   = 32768,
-        runtime  = 60,
         cpus_per_task = 4,
+        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        runtime       = 60,
     singularity: R_SIF
     shell:
         rscript("code/spokes/pathway_progeny.R")
