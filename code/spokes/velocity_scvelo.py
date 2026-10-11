@@ -43,7 +43,9 @@ for s in samples:
         print(f"  STARsolo Velocyto output missing for {sid}: {sp_path} — skipping")
         continue
     genes    = open(f"{sp_path}/features.tsv").read().splitlines()
-    barcodes = [f"{sid}_{b}" for b in open(f"{sp_path}/barcodes.tsv").read().splitlines()]
+    # STARsolo barcodes have no -1 suffix; Cell Ranger adds it, so Seurat merged
+    # barcodes are "{sample}_{barcode}-1". Append -1 to match.
+    barcodes = [f"{sid}_{b}-1" for b in open(f"{sp_path}/barcodes.tsv").read().splitlines()]
     sp = csr_matrix(mmread(f"{sp_path}/spliced.mtx").T)
     un = csr_matrix(mmread(f"{sp_path}/unspliced.mtx").T)
     am = csr_matrix(mmread(f"{sp_path}/ambiguous.mtx").T)

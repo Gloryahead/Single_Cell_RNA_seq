@@ -134,8 +134,8 @@ rule dge_pathway:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/06_de_post_vs_healthy.csv"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (DE analysis after RDS load)
         runtime       = 180,
     singularity: R_SIF
     shell:
@@ -157,8 +157,8 @@ rule slingshot:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_slingshot.rds"
     resources:
-        cpus_per_task = 4,
-        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
         runtime       = 60,
     singularity: R_SIF
     shell:
@@ -169,8 +169,8 @@ rule cellchat:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_cellchat.rds"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (CellChat is heavy with 106K cells)
         runtime       = 240,
     singularity: R_SIF
     shell:
@@ -181,8 +181,8 @@ rule nichenet:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_nichenet_ligands.csv"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB
         runtime       = 240,
     singularity: R_SIF
     shell:
@@ -193,8 +193,8 @@ rule copykat:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_copykat.rds"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB
         runtime       = 360,
     singularity: R_SIF
     shell:
@@ -205,8 +205,8 @@ rule hdwgcna:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_hdwgcna.rds"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (WGCNA network building is heavy)
         runtime       = 240,
     singularity: R_SIF
     shell:
@@ -283,8 +283,8 @@ rule scplotter:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/plots/spoke_scplotter_umap.png"
     resources:
-        cpus_per_task = 4,
-        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
         runtime       = 60,
     singularity: R_SIF
     shell:
@@ -295,8 +295,8 @@ rule decoupler:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_tf_activity.csv"
     resources:
-        cpus_per_task = 4,
-        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
         runtime       = 60,
     singularity: R_SIF
     shell:
@@ -307,8 +307,8 @@ rule progeny:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_pathway_activity.csv"
     resources:
-        cpus_per_task = 4,
-        mem_mb        = 20480,   # 4 × 5120 MB = 20 GB
+        cpus_per_task = 8,
+        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
         runtime       = 60,
     singularity: R_SIF
     shell:
