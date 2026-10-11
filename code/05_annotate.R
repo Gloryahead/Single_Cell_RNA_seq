@@ -23,6 +23,7 @@ if (cfg$annotate$method == "singler") {
   pred <- SingleR(test = sce, ref = ref, labels = ref$label.main)
   obj$celltype_singler <- pred$labels          # keep the raw draft for the record
   obj$celltype         <- pred$labels
+  rm(sce, pred, ref); gc()   # free SCE duplicate + reference — they double memory if kept
 } else {
   manual_map <- c("0" = "CD4 T", "1" = "CD14 Mono", "2" = "B")   # TODO
   obj$celltype <- manual_map[as.character(Idents(obj))]
