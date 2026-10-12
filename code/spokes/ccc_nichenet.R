@@ -20,7 +20,7 @@ res <- nichenet_seuratobj_aggregate(
   seurat_obj      = obj,
   receiver        = "CD8 T",                        # TODO: your receiver cell type
   sender          = c("CD14 Mono", "FCGR3A Mono"),  # TODO: your sender cell type(s)
-  condition_colname = "condition", condition_oi = "pre", condition_reference = "ctrl",
+  condition_colname = "condition", condition_oi = "Post", condition_reference = "Healthy",
   ligand_target_matrix = ligand_target, lr_network = lr_network,
   weighted_networks = NULL)
 write.csv(res$ligand_activities,

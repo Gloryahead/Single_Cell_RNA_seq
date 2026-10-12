@@ -72,7 +72,7 @@ adata = ldata[shared].copy()
 adata.obs = meta_df.loc[shared]
 adata.obsm["X_umap"] = umap_df.loc[shared, ["UMAP_1", "UMAP_2"]].values
 
-scv.pp.filter_and_normalize(adata, min_shared_counts=20, n_top_genes=2000)
+scv.pp.filter_and_normalize(adata, min_shared_counts=20)  # n_top_genes removed: not valid in this scVelo version
 scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
 scv.tl.recover_dynamics(adata, n_jobs=8)
 scv.tl.velocity(adata, mode="dynamical")

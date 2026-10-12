@@ -12,7 +12,7 @@ cfg <- load_config(); set.seed(cfg$seed)
 obj <- readRDS(obj_path(cfg, "05_annotated"))
 
 net <- decoupleR::get_collectri(organism = "human", split_complexes = FALSE)  # TF->target network
-mat <- as.matrix(GetAssayData(obj, layer = "data"))                            # log-norm expression
+mat <- GetAssayData(obj, layer = "data")   # keep sparse — as.matrix() would materialize ~28 GB
 acts <- decoupleR::run_ulm(mat = mat, net = net,
                            .source = "source", .target = "target", .mor = "mor",
                            minsize = 5)
