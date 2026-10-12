@@ -74,8 +74,9 @@ adata.obsm["X_umap"] = umap_df.loc[shared, ["UMAP_1", "UMAP_2"]].values
 
 scv.pp.filter_and_normalize(adata, min_shared_counts=20)  # n_top_genes removed: not valid in this scVelo version
 scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
-scv.tl.recover_dynamics(adata, n_jobs=8)
-scv.tl.velocity(adata, mode="dynamical")
+# Stochastic mode: recover_dynamics() OOMs at 40 GB on 32K cells (dynamical mode).
+# Stochastic estimates velocity from second-order moments — valid and widely used.
+scv.tl.velocity(adata, mode="stochastic")
 scv.tl.velocity_graph(adata)
 scv.pl.velocity_embedding_stream(adata, basis="X_umap", color="celltype",
                                  save=f"{out}/plots/spoke_velocity.png")

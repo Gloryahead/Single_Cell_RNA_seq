@@ -13,6 +13,7 @@ obj <- readRDS(obj_path(cfg, "05_annotated"))
 
 net <- decoupleR::get_progeny(organism = "human", top = 500)   # 14 pathway signatures
 mat <- GetAssayData(obj, layer = "data")   # keep sparse — as.matrix() would materialize ~28 GB
+rm(obj); gc()   # free Seurat object (~20 GB) before run_mlm; mat holds a reference to the sparse layer
 acts <- decoupleR::run_mlm(mat = mat, net = net,
                            .source = "source", .target = "target", .mor = "weight",
                            minsize = 5)

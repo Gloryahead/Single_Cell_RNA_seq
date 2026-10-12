@@ -47,9 +47,9 @@ rule all:
         # Spokes
         f"{OUT}/objects/spoke_monocle3.rds",
         f"{OUT}/objects/spoke_slingshot.rds",
-        f"{OUT}/objects/spoke_cellchat.rds",
-        f"{OUT}/tables/spoke_nichenet_ligands.csv",
-        f"{OUT}/objects/spoke_copykat.rds",
+        # spoke_cellchat.rds    — CellChat not installed in scrna_r.sif; rebuild container to enable
+        # spoke_nichenet_ligands.csv — nichenetr not installed in scrna_r.sif; rebuild container
+        # spoke_copykat.rds     — copykat not installed in scrna_r.sif; rebuild container
         f"{OUT}/objects/spoke_hdwgcna.rds",
         f"{OUT}/objects/spoke_velocity.h5ad",
         f"{OUT}/objects/spoke_cellrank.h5ad",
@@ -259,8 +259,8 @@ rule scvelo:
                           sample=VEL_SAMP),
     output: f"{OUT}/objects/spoke_velocity.h5ad"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (stochastic mode + moments on 32K cells)
         runtime       = 360,
     singularity: PY_SIF
     shell:
@@ -295,8 +295,8 @@ rule decoupler:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_tf_activity.csv"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (DoRothEA; rm(obj) before run_ulm)
         runtime       = 60,
     singularity: R_SIF
     shell:
@@ -307,8 +307,8 @@ rule progeny:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/tables/spoke_pathway_activity.csv"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (rm(obj) before run_mlm; RDS load peaks ~30 GB)
         runtime       = 60,
     singularity: R_SIF
     shell:

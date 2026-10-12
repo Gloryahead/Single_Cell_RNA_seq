@@ -33,7 +33,8 @@ colnames(meta) <- c("celltype", "condition", "sample"); rownames(meta) <- colnam
 run_contrast <- function(ct, grp_lvl, ref_lvl) {
   keep <- meta$celltype == ct & meta$condition %in% c(grp_lvl, ref_lvl)
   cd   <- meta[keep, , drop = FALSE]
-  if (min(table(cd$condition)) < 2) return(NULL)        # need >=2 donors/side
+  # Force both levels so min() sees 0 when one condition is entirely absent (not just < 2)
+  if (min(table(factor(cd$condition, levels = c(grp_lvl, ref_lvl)))) < 2) return(NULL)
   m  <- round(as.matrix(pb[, rownames(cd)]))
   cd$condition <- relevel(factor(cd$condition), ref = ref_lvl)
   dds <- DESeqDataSetFromMatrix(m, cd, ~ condition)

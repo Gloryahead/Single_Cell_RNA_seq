@@ -16,7 +16,7 @@ obj <- SetupForWGCNA(obj, gene_select = "fraction", fraction = 0.05, wgcna_name 
 obj <- MetacellsByGroups(obj, group.by = c("celltype", "condition"),
                          k = 25, ident.group = "celltype")
 obj <- NormalizeMetacells(obj)
-obj <- SetDatExpr(obj, group_name = "CD14 Mono", group.by = "celltype")  # TODO: target cell type
+obj <- SetDatExpr(obj, group_name = "Monocytes", group.by = "celltype")  # HumanPrimaryCellAtlasData label.main
 obj <- TestSoftPowers(obj)
 obj <- ConstructNetwork(obj, setDatExpr = FALSE)
 obj <- ModuleEigengenes(obj)
