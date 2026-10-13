@@ -15,9 +15,12 @@ obj <- readRDS(obj_path(cfg, "05_annotated"))
 # (version bug in the container). Use GTRD TF target gene sets from MSigDB C3 instead —
 # no OmniPath dependency, msigdbr is confirmed installed.
 sp  <- if (cfg$project$organism == "mouse") "Mus musculus" else "Homo sapiens"
-tf_df <- msigdbr(species = sp, category = "C3", subcategory = "TFT:GTRD")
+tf_df <- msigdbr(species = sp, collection = "C3", subcollection = "TFT:GTRD")
 net   <- data.frame(source = tf_df$gs_name, target = tf_df$gene_symbol,
                     mor = 1L, stringsAsFactors = FALSE)
+# msigdbr can return duplicate (source, target) rows (multiple transcript annotations);
+# decoupleR::run_ulm requires unique pairs.
+net <- dplyr::distinct(net, source, target, .keep_all = TRUE)
 
 # Pseudobulk: mean log-norm expression per celltype×sample (~100 columns total).
 # Per-cell run_ulm (105K cols) would OOM; pseudobulk is also more interpretable.

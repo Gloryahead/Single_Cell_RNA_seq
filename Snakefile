@@ -52,7 +52,8 @@ rule all:
         # spoke_copykat.rds     — copykat not installed in scrna_r.sif; rebuild container
         f"{OUT}/objects/spoke_hdwgcna.rds",
         f"{OUT}/objects/spoke_velocity.h5ad",
-        f"{OUT}/objects/spoke_cellrank.h5ad",
+        # spoke_cellrank.h5ad — MPICH/OFI MPI init fails in Singularity on Puma (no IB fabric);
+        #   C-level Abort() is uncatchable; also CellRank is inappropriate for static PBMCs
         # spoke_scplotter_umap.png — scplotter not installed in scrna_r.sif; rebuild container
         f"{OUT}/tables/spoke_tf_activity.csv",
         f"{OUT}/tables/spoke_pathway_activity.csv",
@@ -205,8 +206,8 @@ rule hdwgcna:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_hdwgcna.rds"
     resources:
-        cpus_per_task = 12,
-        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (WGCNA network building is heavy)
+        cpus_per_task = 18,
+        mem_mb        = 92160,   # 18 × 5120 MB = 90 GB (Seurat obj ~40 GB + WGCNA TOM + ModuleEigengenes OOMed at 60 GB)
         runtime       = 240,
     singularity: R_SIF
     shell:
