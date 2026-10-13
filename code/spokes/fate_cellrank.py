@@ -17,9 +17,13 @@ out = cfg["project"]["outdir"]
 
 adata = sc.read_h5ad(f"{out}/objects/spoke_velocity.h5ad")
 
-vk = cr.kernels.VelocityKernel(adata).compute_transition_matrix()
 ck = cr.kernels.ConnectivityKernel(adata).compute_transition_matrix()
-combined = 0.8 * vk + 0.2 * ck
+if "velocity" in adata.layers:
+    vk = cr.kernels.VelocityKernel(adata).compute_transition_matrix()
+    combined = 0.8 * vk + 0.2 * ck
+else:
+    print("WARNING: No velocity layer in adata (low splicing signal). Using connectivity kernel only.")
+    combined = ck
 
 g = cr.estimators.GPCCA(combined)
 g.fit(cluster_key="celltype", n_states=None)

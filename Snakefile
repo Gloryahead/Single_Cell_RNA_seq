@@ -45,15 +45,15 @@ rule all:
         f"{OUT}/objects/05_annotated.rds",
         f"{OUT}/tables/06_de_post_vs_healthy.csv",
         # Spokes
-        f"{OUT}/objects/spoke_monocle3.rds",
+        # spoke_monocle3.rds    — monocle3 not installed in scrna_r.sif; rebuild container
         f"{OUT}/objects/spoke_slingshot.rds",
-        # spoke_cellchat.rds    — CellChat not installed in scrna_r.sif; rebuild container to enable
+        # spoke_cellchat.rds    — CellChat not installed in scrna_r.sif; rebuild container
         # spoke_nichenet_ligands.csv — nichenetr not installed in scrna_r.sif; rebuild container
         # spoke_copykat.rds     — copykat not installed in scrna_r.sif; rebuild container
         f"{OUT}/objects/spoke_hdwgcna.rds",
         f"{OUT}/objects/spoke_velocity.h5ad",
         f"{OUT}/objects/spoke_cellrank.h5ad",
-        f"{OUT}/plots/spoke_scplotter_umap.png",
+        # spoke_scplotter_umap.png — scplotter not installed in scrna_r.sif; rebuild container
         f"{OUT}/tables/spoke_tf_activity.csv",
         f"{OUT}/tables/spoke_pathway_activity.csv",
 

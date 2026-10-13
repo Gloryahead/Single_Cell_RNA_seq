@@ -76,9 +76,15 @@ scv.pp.filter_and_normalize(adata, min_shared_counts=20)  # n_top_genes removed:
 scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
 # Stochastic mode: recover_dynamics() OOMs at 40 GB on 32K cells (dynamical mode).
 # Stochastic estimates velocity from second-order moments — valid and widely used.
-scv.tl.velocity(adata, mode="stochastic")
-scv.tl.velocity_graph(adata)
-scv.pl.velocity_embedding_stream(adata, basis="X_umap", color="celltype",
-                                 save=f"{out}/plots/spoke_velocity.png")
+# Wrapped in try/except: PBMCs have low splicing signal; near-zero variance causes
+# leastsq_generalized to receive a shape-(1,) array where (n_cells,) is expected.
+try:
+    scv.tl.velocity(adata, mode="stochastic")
+    scv.tl.velocity_graph(adata)
+    scv.pl.velocity_embedding_stream(adata, basis="X_umap", color="celltype",
+                                     save=f"{out}/plots/spoke_velocity.png")
+except Exception as e:
+    print(f"WARNING: velocity computation failed ({type(e).__name__}: {e})")
+    print("PBMC splicing signal too low for reliable velocity. Saving AnnData without velocity.")
 adata.write(f"{out}/objects/spoke_velocity.h5ad")
 print("velocity done ->", f"{out}/objects/spoke_velocity.h5ad")

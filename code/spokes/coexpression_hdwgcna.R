@@ -16,7 +16,12 @@ obj <- SetupForWGCNA(obj, gene_select = "fraction", fraction = 0.05, wgcna_name 
 obj <- MetacellsByGroups(obj, group.by = c("celltype", "condition"),
                          k = 25, ident.group = "celltype")
 obj <- NormalizeMetacells(obj)
-obj <- SetDatExpr(obj, group_name = "Monocytes", group.by = "celltype")  # HumanPrimaryCellAtlasData label.main
+# Auto-detect most abundant cell type: HumanPrimaryCellAtlasData monocyte labels vary
+# ("CD14+ Monocytes", "Monocytes", "CMP", etc.) depending on the reference version.
+ct_counts <- sort(table(obj$celltype), decreasing = TRUE)
+target_ct <- names(ct_counts)[1]
+message("hdWGCNA target cell type: ", target_ct, " (", ct_counts[1], " cells)")
+obj <- SetDatExpr(obj, group_name = target_ct, group.by = "celltype")
 obj <- TestSoftPowers(obj)
 obj <- ConstructNetwork(obj, setDatExpr = FALSE)
 obj <- ModuleEigengenes(obj)
