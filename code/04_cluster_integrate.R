@@ -35,7 +35,14 @@ obj <- RunUMAP(obj, reduction = reduction, dims = dims)
 
 saveRDS(obj, obj_path(cfg, "04_clustered"))
 # sanity check: cells should mix by SAMPLE but separate by biology
-ggsave(out_path(cfg, "plots", "04_umap_clusters_samples.png"),
-       DimPlot(obj, label = TRUE) + DimPlot(obj, group.by = "sample"),
-       width = 13, height = 5)
+p1 <- DimPlot(obj, label = TRUE, repel = TRUE, label.size = 3.5, pt.size = 0.3) +
+      NoLegend() +
+      ggtitle("Clusters") +
+      theme(plot.title = element_text(hjust = 0.5))
+p2 <- DimPlot(obj, group.by = "sample", pt.size = 0.3) +
+      ggtitle("Sample mixing") +
+      theme(plot.title = element_text(hjust = 0.5))
+p_clusters <- p1 + p2
+ggsave(out_path(cfg, "plots", "04_umap_clusters_samples.png"), p_clusters, width = 13, height = 5)
+ggsave(out_path(cfg, "plots", "04_umap_clusters_samples.pdf"), p_clusters, width = 13, height = 5)
 log_session(cfg, "04_cluster_integrate")

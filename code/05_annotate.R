@@ -60,8 +60,15 @@ pbmc_markers <- c("CD3D","IL7R","CD4","CD8A","CD8B","GZMK","GNLY","NKG7",
                   "MS4A1","CD79A","CD14","LYZ","FCGR3A","MS4A7",
                   "FCER1A","CST3","PPBP","PF4")
 pbmc_markers <- pbmc_markers[pbmc_markers %in% rownames(obj)]
-ggsave(out_path(cfg, "plots", "05_marker_dotplot.png"),
-       DotPlot(obj, features = pbmc_markers) + RotatedAxis(), width = 12, height = 6)
+dp <- DotPlot(obj, features = pbmc_markers) +
+      RotatedAxis() +
+      theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
+            axis.text.y  = element_text(size = 9),
+            legend.title = element_text(size = 9),
+            legend.text  = element_text(size = 8)) +
+      labs(x = "Features", y = "Identity")
+ggsave(out_path(cfg, "plots", "05_marker_dotplot.png"), dp, width = 12, height = 6)
+ggsave(out_path(cfg, "plots", "05_marker_dotplot.pdf"), dp, width = 12, height = 6)
 
 markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25,
                           max.cells.per.ident = 500)
@@ -71,6 +78,8 @@ rm(markers); gc()   # free marker table before large save/export operations
 # ---- save the canonical hub object + lightweight CSV export for velocity ----
 saveRDS(obj, obj_path(cfg, "05_annotated"))
 export_meta_for_velocity(obj, cfg)   # metadata + UMAP → CSVs (tutorial approach)
-ggsave(out_path(cfg, "plots", "05_umap_celltypes.png"),
-       DimPlot(obj, label = TRUE), width = 7, height = 6)
+p_ct <- DimPlot(obj, label = TRUE, repel = TRUE, label.size = 3, pt.size = 0.3) +
+        theme(plot.title = element_text(hjust = 0.5))
+ggsave(out_path(cfg, "plots", "05_umap_celltypes.png"), p_ct, width = 10, height = 7)
+ggsave(out_path(cfg, "plots", "05_umap_celltypes.pdf"), p_ct, width = 10, height = 7)
 log_session(cfg, "05_annotate")
