@@ -44,6 +44,7 @@ snakemake \
   --use-singularity \
   --singularity-args "--bind $SCRNA_DATA" \
   -j 8 \
+  "$@" \
   all
 
 echo ""
