@@ -12,6 +12,7 @@
 # ---------------------------------------------------------------------
 PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
+suppressPackageStartupMessages(library(patchwork))
 cfg <- load_config(); set.seed(cfg$seed)
 
 # ---- load each sample, tag metadata, compute QC metrics ----
@@ -23,34 +24,55 @@ objs <- lapply(cfg$samples, function(s) {
   add_qc_metrics(obj, cfg)          # percent.mt + percent.ribo
 })
 names(objs) <- vapply(cfg$samples, `[[`, "", "id")
+# capture per-sample raw counts before any QC filtering
+cells_raw <- vapply(objs, ncol, integer(1L))
 
 # ---- QC plots BEFORE filtering: thresholds are decisions made from these ----
 pre <- merge(objs[[1]], objs[-1])
 if (inherits(pre[["RNA"]], "Assay5")) pre <- JoinLayers(pre)
-ggsave(out_path(cfg, "qc", "qc_violin_prefilter.png"),
-       VlnPlot(pre, c("nFeature_RNA","nCount_RNA","percent.mt","percent.ribo"),
-               group.by = "sample", pt.size = 0, ncol = 4), width = 16, height = 4)
+# build panels individually so each gets its own threshold lines (red dashed)
+p_nfeat  <- VlnPlot(pre, "nFeature_RNA",  group.by = "sample", pt.size = 0) + NoLegend() +
+             geom_hline(yintercept = c(cfg$qc$min_genes, cfg$qc$max_genes),
+                        linetype = "dashed", colour = "red", linewidth = 0.5)
+p_ncount <- VlnPlot(pre, "nCount_RNA",    group.by = "sample", pt.size = 0) + NoLegend()
+p_mt     <- VlnPlot(pre, "percent.mt",    group.by = "sample", pt.size = 0) + NoLegend() +
+             geom_hline(yintercept = cfg$qc$max_mito_pct,
+                        linetype = "dashed", colour = "red", linewidth = 0.5)
+p_ribo   <- VlnPlot(pre, "percent.ribo",  group.by = "sample", pt.size = 0) + NoLegend()
+p_pre    <- wrap_plots(p_nfeat, p_ncount, p_mt, p_ribo, nrow = 1)
+ggsave(out_path(cfg, "qc", "qc_violin_prefilter.png"), p_pre, width = 16, height = 4)
+ggsave(out_path(cfg, "qc", "qc_violin_prefilter.pdf"), p_pre, width = 16, height = 4)
 # scatter reveals the doublet corner (high counts AND high genes)
-ggsave(out_path(cfg, "qc", "qc_scatter_prefilter.png"),
-       FeatureScatter(pre, "nCount_RNA", "nFeature_RNA", group.by = "sample"),
-       width = 7, height = 5)
-rm(pre); invisible(gc())
+p_scat <- FeatureScatter(pre, "nCount_RNA", "nFeature_RNA", group.by = "sample")
+ggsave(out_path(cfg, "qc", "qc_scatter_prefilter.png"), p_scat, width = 7, height = 5)
+ggsave(out_path(cfg, "qc", "qc_scatter_prefilter.pdf"), p_scat, width = 7, height = 5)
+rm(pre, p_nfeat, p_ncount, p_mt, p_ribo, p_pre, p_scat); invisible(gc())
 
 # ---- filter + flag doublets, per sample (Parts 2 / 2-2) ----
-dbl_stats <- list()
+dbl_stats    <- list()
+filter_stats <- list()
 objs <- lapply(names(objs), function(id) {
-  obj <- apply_qc_filter(objs[[id]], cfg)          # nFeature + percent.mt cutoffs
-  n_before <- ncol(obj)
+  obj    <- apply_qc_filter(objs[[id]], cfg)       # nFeature + percent.mt cutoffs
+  n_post <- ncol(obj)
+  filter_stats[[id]] <<- data.frame(
+    sample         = id,
+    cells_raw      = cells_raw[[id]],
+    cells_after_qc = n_post,
+    pct_kept       = round(100 * n_post / cells_raw[[id]], 1)
+  )
   if (isTRUE(cfg$qc$remove_doublets)) {
-    obj <- run_scdblfinder(obj)                    # adds $doublet: singlet/doublet
+    obj   <- run_scdblfinder(obj)                  # adds $doublet: singlet/doublet
     n_dbl <- sum(obj$doublet == "doublet")
-    dbl_stats[[id]] <<- data.frame(sample = id, cells = n_before,
+    dbl_stats[[id]] <<- data.frame(sample = id, cells = n_post,
                                    doublets = n_dbl,
-                                   pct = round(100 * n_dbl / n_before, 2))
+                                   pct = round(100 * n_dbl / n_post, 2))
   }
   obj
 })
 names(objs) <- vapply(cfg$samples, `[[`, "", "id")
+filter_summary <- do.call(rbind, filter_stats)
+write.csv(filter_summary, out_path(cfg, "qc", "filter_summary.csv"), row.names = FALSE)
+cat("\n=== cells per sample after QC filtering ===\n"); print(filter_summary)
 
 merged <- if (length(objs) == 1) objs[[1]] else merge(objs[[1]], objs[-1], add.cell.ids = names(objs))
 if (inherits(merged[["RNA"]], "Assay5")) merged <- JoinLayers(merged)
@@ -71,18 +93,31 @@ if (isTRUE(cfg$qc$remove_doublets)) {
   tmp <- NormalizeData(merged, verbose = FALSE) |>
          FindVariableFeatures(verbose = FALSE) |> ScaleData(verbose = FALSE) |>
          RunPCA(npcs = 20, verbose = FALSE) |> RunUMAP(dims = 1:20, verbose = FALSE)
-  ggsave(out_path(cfg, "qc", "doublet_umap.png"),
-         DimPlot(tmp, group.by = "doublet", order = "doublet",
-                 cols = c(singlet = "grey85", doublet = "red")) +
-           ggtitle("scDblFinder calls (red = doublet)"), width = 7, height = 6)
+  p_dumap <- DimPlot(tmp, group.by = "doublet", order = "doublet",
+                     cols = c(singlet = "grey85", doublet = "red")) +
+             ggtitle("scDblFinder calls (red = doublet)")
+  ggsave(out_path(cfg, "qc", "doublet_umap.png"), p_dumap, width = 7, height = 6)
+  ggsave(out_path(cfg, "qc", "doublet_umap.pdf"), p_dumap, width = 7, height = 6)
   # doublets should have HIGHER counts/genes than singlets — sanity check
-  ggsave(out_path(cfg, "qc", "doublet_violin.png"),
-         VlnPlot(tmp, c("nCount_RNA","nFeature_RNA"), group.by = "doublet", pt.size = 0),
-         width = 9, height = 4)
-  rm(tmp); invisible(gc())
+  p_dvln <- VlnPlot(tmp, c("nCount_RNA","nFeature_RNA"), group.by = "doublet", pt.size = 0)
+  ggsave(out_path(cfg, "qc", "doublet_violin.png"), p_dvln, width = 9, height = 4)
+  ggsave(out_path(cfg, "qc", "doublet_violin.pdf"), p_dvln, width = 9, height = 4)
+  rm(tmp, p_dumap, p_dvln); invisible(gc())
 
   merged <- subset(merged, subset = doublet == "singlet")   # NOW remove them
 }
+
+# ---- QC plots AFTER filtering: confirm distributions are clean ----
+p_post <- wrap_plots(
+  VlnPlot(merged, "nFeature_RNA",  group.by = "sample", pt.size = 0) + NoLegend(),
+  VlnPlot(merged, "nCount_RNA",    group.by = "sample", pt.size = 0) + NoLegend(),
+  VlnPlot(merged, "percent.mt",    group.by = "sample", pt.size = 0) + NoLegend(),
+  VlnPlot(merged, "percent.ribo",  group.by = "sample", pt.size = 0) + NoLegend(),
+  nrow = 1
+)
+ggsave(out_path(cfg, "qc", "qc_violin_postfilter.png"), p_post, width = 16, height = 4)
+ggsave(out_path(cfg, "qc", "qc_violin_postfilter.pdf"), p_post, width = 16, height = 4)
+rm(p_post); invisible(gc())
 
 cat(sprintf("\nCells after QC: %d | genes: %d\n", ncol(merged), nrow(merged)))
 saveRDS(merged, obj_path(cfg, "03_filtered"))
