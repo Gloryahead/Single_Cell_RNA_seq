@@ -105,13 +105,15 @@ rule cellranger_count:
 # ── Part 2: QC filtering ──────────────────────────────────────────────────────
 rule qc_filter:
     input:
-        expand(f"{OUT}/counts/{{sample}}/outs/filtered_feature_bc_matrix",
-               sample=SAMPLES),
+        filtered = expand(f"{OUT}/counts/{{sample}}/outs/filtered_feature_bc_matrix",
+                          sample=SAMPLES),
+        raw      = expand(f"{OUT}/counts/{{sample}}/outs/raw_feature_bc_matrix",
+                          sample=SAMPLES),
     output:
         f"{OUT}/objects/03_filtered.rds",
     resources:
         cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        mem_mb        = 51200,   # 8 × 5120 MB → 50 GB (SoupX loads raw + filtered per sample)
         runtime       = 120,
     singularity: R_SIF
     shell:

@@ -13,17 +13,55 @@
 PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_seq")
 setwd(PROJECT); source("code/utils.R")
 suppressPackageStartupMessages(library(patchwork))
+suppressPackageStartupMessages(library(SoupX))
 cfg <- load_config(); set.seed(cfg$seed)
 
-# ---- load each sample, tag metadata, compute QC metrics ----
+# ---- load each sample, run SoupX ambient RNA correction, compute QC metrics ----
+# SoupX uses the raw (all-droplet) matrix to learn the ambient soup profile, then
+# subtracts the estimated contamination from the filtered (cell) matrix.
+# Cell Ranger's graphclust labels are used for autoEstCont when available.
+soupx_stats <- list()
 objs <- lapply(cfg$samples, function(s) {
-  mtx <- file.path(cfg$project$outdir, "counts", s$id,
-                   "outs", "filtered_feature_bc_matrix")
-  obj <- CreateSeuratObject(Read10X(mtx), project = s$id, min.cells = cfg$qc$min_cells)
+  counts_dir <- file.path(cfg$project$outdir, "counts", s$id, "outs")
+
+  raw_counts  <- Read10X(file.path(counts_dir, "raw_feature_bc_matrix"))
+  filt_counts <- Read10X(file.path(counts_dir, "filtered_feature_bc_matrix"))
+  sc <- SoupX::SoupChannel(raw_counts, filt_counts)
+  rm(raw_counts); invisible(gc())
+
+  cl_path <- file.path(counts_dir, "analysis", "clustering", "graphclust", "clusters.csv")
+  if (file.exists(cl_path)) {
+    cl     <- read.csv(cl_path)
+    bc_col  <- grep("barcode", names(cl), ignore.case = TRUE, value = TRUE)[1]
+    clu_col <- grep("cluster", names(cl), ignore.case = TRUE, value = TRUE)[1]
+    sc <- SoupX::setClusters(sc, setNames(cl[[clu_col]], cl[[bc_col]]))
+  } else {
+    message("  ", s$id, ": graphclust not found — autoEstCont will use pseudobulk")
+  }
+  sc <- tryCatch(
+    SoupX::autoEstCont(sc),
+    error = function(e) {
+      message("  WARNING: autoEstCont failed for ", s$id, ": ", conditionMessage(e),
+              "\n  Falling back to 10% contamination estimate")
+      SoupX::setContaminationFraction(sc, 0.1)
+    }
+  )
+  rho       <- tryCatch(sc$fit$rhoEst, error = function(e) 0.1)
+  corrected <- SoupX::adjustCounts(sc, roundToInt = TRUE)
+  soupx_stats[[s$id]] <<- data.frame(sample = s$id,
+                                      contamination_pct = round(100 * rho, 2))
+  message(sprintf("  %s: SoupX contamination = %.1f%%", s$id, 100 * rho))
+
+  obj <- CreateSeuratObject(corrected, project = s$id, min.cells = cfg$qc$min_cells)
+  rm(filt_counts, sc, corrected); invisible(gc())
+
   obj$sample <- s$id; obj$condition <- s$condition
-  add_qc_metrics(obj, cfg)          # percent.mt + percent.ribo
+  add_qc_metrics(obj, cfg)
 })
 names(objs) <- vapply(cfg$samples, `[[`, "", "id")
+soupx_summary <- do.call(rbind, soupx_stats)
+write.csv(soupx_summary, out_path(cfg, "qc", "soupx_summary.csv"), row.names = FALSE)
+cat("\n=== SoupX ambient RNA contamination per sample ===\n"); print(soupx_summary)
 # capture per-sample raw counts before any QC filtering
 cells_raw <- vapply(objs, ncol, integer(1L))
 
