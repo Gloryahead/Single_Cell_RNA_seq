@@ -152,8 +152,8 @@ rule dge_pathway:
     output: f"{OUT}/tables/06_de_post_vs_healthy.csv"
     resources:
         cpus_per_task = 12,
-        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (DE analysis after RDS load)
-        runtime       = 180,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB
+        runtime       = 360,     # 6 h: FindMarkers per cell type × 3 contrasts adds ~90 min
     singularity: R_SIF
     shell:
         rscript("code/06_dge_pathway.R")
