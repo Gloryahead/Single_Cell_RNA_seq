@@ -140,8 +140,8 @@ rule annotate:
         umap_csv = f"{OUT}/objects/05_annotated_umap.csv",
     resources:
         cpus_per_task = 20,
-        mem_mb        = 102400,  # 20 × 5120 MB = 100 GB (SingleR GC'd + FindAllMarkers + saveRDS)
-        runtime       = 240,
+        mem_mb        = 102400,  # 20 × 5120 MB = 100 GB (3× SingleR + scType + FindAllMarkers)
+        runtime       = 360,     # 6 h: Monaco + DICE add ~2× SingleR runtime
     singularity: R_SIF
     shell:
         rscript("code/05_annotate.R")
