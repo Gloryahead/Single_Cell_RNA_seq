@@ -176,7 +176,7 @@ rule slingshot:
     resources:
         cpus_per_task = 8,
         mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
-        runtime       = 60,
+        runtime       = 120,     # gene-pseudotime Spearman correlations add ~30-60 min
     singularity: R_SIF
     shell:
         rscript("code/spokes/trajectory_slingshot.R")
