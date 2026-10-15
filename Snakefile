@@ -37,8 +37,12 @@ def pyscript(script):
     return f"SCRNA_PROJECT={CODE} SCRNA_DATA={DATA} python {script}"
 
 # ── Master target ─────────────────────────────────────────────────────────────
+localrules: qc_report
+
 rule all:
     input:
+        # QC report (generated from Cell Ranger metrics_summary.csv for every sample)
+        f"{OUT}/qc_report.html",
         # Core pipeline
         f"{OUT}/objects/03_filtered.rds",
         f"{OUT}/objects/04_clustered.rds",
@@ -57,6 +61,16 @@ rule all:
         # spoke_scplotter_umap.png — scplotter not installed in scrna_r.sif; rebuild container
         f"{OUT}/tables/spoke_tf_activity.csv",
         f"{OUT}/tables/spoke_pathway_activity.csv",
+
+# ── QC report (runs locally after Cell Ranger; no SLURM job needed) ──────────
+rule qc_report:
+    input:
+        expand(f"{OUT}/counts/{{sample}}/outs/metrics_summary.csv", sample=SAMPLES)
+    output:
+        html = f"{OUT}/qc_report.html",
+        csv  = f"{OUT}/qc_report.csv",
+    shell:
+        pyscript("code/qc_report.py")
 
 # ── Part 1: Cell Ranger alignment ─────────────────────────────────────────────
 rule cellranger_count:
