@@ -331,11 +331,13 @@ rule decoupler:
 # ── Part 17: PROGENy ─────────────────────────────────────────────────────────
 rule progeny:
     input:  f"{OUT}/objects/05_annotated.rds"
-    output: f"{OUT}/tables/spoke_pathway_activity.csv"
+    output:
+        pb  = f"{OUT}/tables/spoke_pathway_activity.csv",
+        ct  = f"{OUT}/tables/spoke_pathway_activity_by_celltype.csv",
     resources:
         cpus_per_task = 12,
-        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (rm(obj) before run_mlm; RDS load peaks ~30 GB)
-        runtime       = 60,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (pseudobulk + 500-cell downsample MLM)
+        runtime       = 90,      # PROGENy download + 2 MLM runs + 3 plots
     singularity: R_SIF
     shell:
         rscript("code/spokes/pathway_progeny.R")
