@@ -59,7 +59,7 @@ rule all:
         f"{OUT}/tables/spoke_velocity_top_genes.csv",
         # spoke_cellrank.h5ad — MPICH/OFI MPI init fails in Singularity on Puma (no IB fabric);
         #   C-level Abort() is uncatchable; also CellRank is inappropriate for static PBMCs
-        # spoke_scplotter_umap.png — scplotter not installed in scrna_r.sif; rebuild container
+        # spoke_scplotter_02_umap_celltypes.png — scplotter not installed in scrna_r.sif; rebuild container
         f"{OUT}/tables/spoke_tf_activity.csv",
         f"{OUT}/tables/spoke_pathway_activity.csv",
 
@@ -303,11 +303,13 @@ rule cellrank:
 # ── Part 15: scplotter ────────────────────────────────────────────────────────
 rule scplotter:
     input:  f"{OUT}/objects/05_annotated.rds"
-    output: f"{OUT}/plots/spoke_scplotter_umap.png"
+    output:
+        umap     = f"{OUT}/plots/spoke_scplotter_02_umap_celltypes.png",
+        comp     = f"{OUT}/plots/spoke_scplotter_13_composition_by_condition.png",
     resources:
         cpus_per_task = 8,
         mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
-        runtime       = 60,
+        runtime       = 120,     # FindAllMarkers + condition DE add ~45-60 min
     singularity: R_SIF
     shell:
         rscript("code/spokes/viz_scplotter.R")
