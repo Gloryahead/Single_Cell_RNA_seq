@@ -37,7 +37,7 @@ def pyscript(script):
     return f"SCRNA_PROJECT={CODE} SCRNA_DATA={DATA} python {script}"
 
 # ── Master target ─────────────────────────────────────────────────────────────
-localrules: qc_report
+localrules: qc_report, setup_networks
 
 rule all:
     input:
@@ -314,30 +314,47 @@ rule scplotter:
     shell:
         rscript("code/spokes/viz_scplotter.R")
 
+# ── Network pre-download (localrule — runs on orchestrator node, has internet) ─
+# Downloads CollecTRI and PROGENy CSVs before Parts 16/17 compute jobs start.
+# Being a localrule means it runs on the Snakemake orchestrator node (the job
+# submitted via snakemake.slurm), never dispatched to a child SLURM job.
+# If you prefer to run it manually first: sbatch code/setup_networks.slurm
+rule setup_networks:
+    output:
+        collectri = f"{OUT}/references/collectri_human.csv",
+        progeny   = f"{OUT}/references/progeny_human.csv",
+    singularity: R_SIF
+    shell:
+        rscript("code/setup_networks.R")
+
 # ── Part 16: decoupleR / CollecTRI ────────────────────────────────────────────
 rule decoupler:
-    input:  f"{OUT}/objects/05_annotated.rds"
+    input:
+        rds       = f"{OUT}/objects/05_annotated.rds",
+        collectri = f"{OUT}/references/collectri_human.csv",
     output:
         pb  = f"{OUT}/tables/spoke_tf_activity.csv",
         ct  = f"{OUT}/tables/spoke_tf_activity_by_celltype.csv",
     resources:
         cpus_per_task = 12,
         mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (pseudobulk + 500-cell downsample ULM)
-        runtime       = 120,     # CollecTRI download + 2 ULM runs + 4 plots
+        runtime       = 120,     # 2 ULM runs + 4 plots (no download — CSV pre-loaded)
     singularity: R_SIF
     shell:
         rscript("code/spokes/grn_decoupler.R")
 
 # ── Part 17: PROGENy ─────────────────────────────────────────────────────────
 rule progeny:
-    input:  f"{OUT}/objects/05_annotated.rds"
+    input:
+        rds     = f"{OUT}/objects/05_annotated.rds",
+        progeny = f"{OUT}/references/progeny_human.csv",
     output:
         pb  = f"{OUT}/tables/spoke_pathway_activity.csv",
         ct  = f"{OUT}/tables/spoke_pathway_activity_by_celltype.csv",
     resources:
         cpus_per_task = 12,
         mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (pseudobulk + 500-cell downsample MLM)
-        runtime       = 90,      # PROGENy download + 2 MLM runs + 3 plots
+        runtime       = 90,      # 2 MLM runs + 3 plots (no download — CSV pre-loaded)
     singularity: R_SIF
     shell:
         rscript("code/spokes/pathway_progeny.R")
