@@ -85,6 +85,12 @@ dependencies:
   - r-ggraph
   - r-ggalluvial                   # CellChat river/alluvial plots
   - bioconductor-biocneighbors
+  - r-nmf                          # CellChat: NMF-based communication pattern analysis
+  - r-dbscan                       # CopyKAT: density-based cell clustering
+  - r-clustree                     # scplotter: ClustreePlot + clustree viz
+  - bioconductor-proxyc            # scplotter: sparse dot products for dot/bubble plots
+  - r-ggh4x                        # scplotter: ggplot2 axis / facet extensions
+  - r-ggridges                     # 06_dge_pathway.R: ridge plots for module scores
 
   # ---- General visualization / utilities used throughout ----
   - r-tidyverse

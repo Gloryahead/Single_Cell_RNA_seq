@@ -27,6 +27,62 @@ if (cc$integration == "harmony") {
   reduction <- "harmony"
 }
 
+# ---- batch-mixing metric: kNN sample entropy (Harmony only) -------------
+# For each cell, compute the normalised Shannon entropy of the sample
+# distribution in its 20 nearest Harmony neighbours.
+# Score 1.0 = perfect mixing across samples; 0.0 = all neighbours same sample.
+# Scores below ~0.7 suggest residual batch structure worth investigating.
+if (cc$integration == "harmony") {
+  suppressPackageStartupMessages(library(FNN))
+  emb_all   <- Embeddings(obj, "harmony")[, seq_len(cc$n_pcs), drop = FALSE]
+  k_mix     <- 20L
+  nn_idx    <- FNN::get.knnx(emb_all, emb_all, k = k_mix + 1L)$nn.index[, -1L]
+  samp_vec  <- obj$sample
+  n_samples <- length(unique(samp_vec))
+
+  mixing_score <- apply(nn_idx, 1L, function(idx) {
+    p <- as.numeric(table(samp_vec[idx])) / k_mix
+    p <- p[p > 0]
+    -sum(p * log(p)) / log(n_samples)  # normalised 0 – 1
+  })
+  obj$knn_mixing_score <- mixing_score
+
+  mix_summ <- aggregate(knn_mixing_score ~ sample + condition,
+                        data = obj@meta.data, FUN = mean)
+  mix_summ$knn_mixing_score <- round(mix_summ$knn_mixing_score, 4)
+  write.csv(mix_summ,
+            out_path(cfg, "qc", "integration_mixing_score.csv"),
+            row.names = FALSE)
+
+  overall_mean <- round(mean(mixing_score), 4)
+  cat(sprintf("\n=== Harmony batch-mixing (kNN entropy, k=%d) ===\n", k_mix))
+  cat(sprintf("Overall mean mixing score: %.4f  (1.00 = perfect, <0.70 = investigate)\n",
+              overall_mean))
+  print(mix_summ[order(mix_summ$sample), ])
+
+  p_mix <- ggplot2::ggplot(
+    obj@meta.data,
+    ggplot2::aes(x = sample, y = knn_mixing_score, fill = condition)) +
+    ggplot2::geom_violin(scale = "width", trim = TRUE) +
+    ggplot2::geom_boxplot(width = 0.12, fill = "white", outlier.size = 0.3) +
+    ggplot2::geom_hline(yintercept = overall_mean,
+                        linetype = "dashed", color = "grey40") +
+    ggplot2::annotate("text", x = Inf, y = overall_mean + 0.01,
+                      label = paste0("mean=", overall_mean),
+                      hjust = 1.1, size = 3, color = "grey30") +
+    ggplot2::labs(x = NULL, y = "kNN mixing score (0–1)", fill = "Condition",
+                  title = sprintf("Harmony integration quality (k=%d nearest neighbours)",
+                                  k_mix)) +
+    ggplot2::theme_classic(base_size = 12) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                   plot.title  = ggplot2::element_text(hjust = 0.5))
+  ggsave(out_path(cfg, "plots", "04_harmony_mixing_score.png"),
+         p_mix, width = 10, height = 5)
+  ggsave(out_path(cfg, "plots", "04_harmony_mixing_score.pdf"),
+         p_mix, width = 10, height = 5)
+  rm(emb_all, nn_idx, mix_summ, p_mix); invisible(gc())
+}
+
 # ---- neighbors -> clusters -> UMAP, all on the integrated reduction ----
 dims <- 1:cc$n_pcs
 obj <- FindNeighbors(obj, reduction = reduction, dims = dims)

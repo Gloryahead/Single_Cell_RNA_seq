@@ -44,4 +44,10 @@ if (!requireNamespace("scplotter", quietly = TRUE)) {
            error = function(e) gh("pwwang/scplotter"))
 }
 
+# ---- Integration quality (optional LISI metric; kNN entropy used by default) ----
+# The pipeline uses FNN-based kNN mixing entropy — no extra package needed.
+# Uncomment the line below to also install the immunogenomics LISI package
+# if you want the published iLISI / cLISI metrics for a methods section.
+# gh("immunogenomics/lisi")
+
 message("Done. Restart R and library() each package to verify.")
