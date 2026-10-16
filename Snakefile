@@ -289,7 +289,9 @@ rule scvelo:
 # ── Part 14: CellRank ─────────────────────────────────────────────────────────
 rule cellrank:
     input:  f"{OUT}/objects/spoke_velocity.h5ad"
-    output: f"{OUT}/objects/spoke_cellrank.h5ad"
+    output:
+        h5ad    = f"{OUT}/objects/spoke_cellrank.h5ad",
+        drivers = f"{OUT}/tables/spoke_cellrank_drivers.csv",
     resources:
         cpus_per_task = 8,
         mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
