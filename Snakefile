@@ -56,6 +56,7 @@ rule all:
         # spoke_copykat.rds     — copykat not installed in scrna_r.sif; rebuild container
         f"{OUT}/objects/spoke_hdwgcna.rds",
         f"{OUT}/objects/spoke_velocity.h5ad",
+        f"{OUT}/tables/spoke_velocity_top_genes.csv",
         # spoke_cellrank.h5ad — MPICH/OFI MPI init fails in Singularity on Puma (no IB fabric);
         #   C-level Abort() is uncatchable; also CellRank is inappropriate for static PBMCs
         # spoke_scplotter_umap.png — scplotter not installed in scrna_r.sif; rebuild container
@@ -274,11 +275,13 @@ rule scvelo:
         umap_csv = f"{OUT}/objects/05_annotated_umap.csv",
         starsolo = expand(f"{OUT}/velocity/{{sample}}/Solo.out",
                           sample=VEL_SAMP),
-    output: f"{OUT}/objects/spoke_velocity.h5ad"
+    output:
+        h5ad = f"{OUT}/objects/spoke_velocity.h5ad",
+        csv  = f"{OUT}/tables/spoke_velocity_top_genes.csv",
     resources:
         cpus_per_task = 12,
         mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (stochastic mode + moments on 32K cells)
-        runtime       = 360,
+        runtime       = 480,     # extra 2 h: per-condition plots + HVG selection + top-genes rank
     singularity: PY_SIF
     shell:
         pyscript("code/spokes/velocity_scvelo.py")
