@@ -317,11 +317,13 @@ rule scplotter:
 # ── Part 16: decoupleR / CollecTRI ────────────────────────────────────────────
 rule decoupler:
     input:  f"{OUT}/objects/05_annotated.rds"
-    output: f"{OUT}/tables/spoke_tf_activity.csv"
+    output:
+        pb  = f"{OUT}/tables/spoke_tf_activity.csv",
+        ct  = f"{OUT}/tables/spoke_tf_activity_by_celltype.csv",
     resources:
         cpus_per_task = 12,
-        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (DoRothEA; rm(obj) before run_ulm)
-        runtime       = 60,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (pseudobulk + 500-cell downsample ULM)
+        runtime       = 120,     # CollecTRI download + 2 ULM runs + 4 plots
     singularity: R_SIF
     shell:
         rscript("code/spokes/grn_decoupler.R")
