@@ -321,8 +321,11 @@ rule scplotter:
 # If you prefer to run it manually first: sbatch code/setup_networks.slurm
 rule setup_networks:
     output:
-        collectri = f"{OUT}/references/collectri_human.csv",
-        progeny   = f"{OUT}/references/progeny_human.csv",
+        # Only PROGENy is mandatory — no fallback exists if it fails.
+        # CollecTRI is optional: if collectri_human.csv is absent, grn_decoupler.R
+        # falls back to GTRD (MSigDB C3). Declaring it here would cause
+        # MissingOutputException whenever the OmnipathR static-table bug fires.
+        progeny = f"{OUT}/references/progeny_human.csv",
     singularity: R_SIF
     shell:
         rscript("code/setup_networks.R")
@@ -330,8 +333,8 @@ rule setup_networks:
 # ── Part 16: decoupleR / CollecTRI ────────────────────────────────────────────
 rule decoupler:
     input:
-        rds       = f"{OUT}/objects/05_annotated.rds",
-        collectri = f"{OUT}/references/collectri_human.csv",
+        rds     = f"{OUT}/objects/05_annotated.rds",
+        progeny = f"{OUT}/references/progeny_human.csv",  # ensures setup_networks runs first
     output:
         pb  = f"{OUT}/tables/spoke_tf_activity.csv",
         ct  = f"{OUT}/tables/spoke_tf_activity_by_celltype.csv",
