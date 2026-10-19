@@ -46,7 +46,8 @@ objs <- lapply(cfg$samples, function(s) {
       SoupX::setContaminationFraction(sc, 0.1)
     }
   )
-  rho       <- tryCatch(sc$fit$rhoEst, error = function(e) 0.1)
+  rho_est <- tryCatch(sc$fit$rhoEst, error = function(e) NULL)
+  rho     <- if (!is.null(rho_est) && length(rho_est) == 1L) rho_est else 0.1
   corrected <- SoupX::adjustCounts(sc, roundToInt = TRUE)
   soupx_stats[[s$id]] <<- data.frame(sample = s$id,
                                       contamination_pct = round(100 * rho, 2))
