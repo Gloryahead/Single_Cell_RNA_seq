@@ -129,7 +129,13 @@ if (isTRUE(cfg$qc$remove_doublets)) {
   cat("Expect roughly ~0.8%% per 1000 cells loaded (10x). Far less => under-calling.\n")
 
   # quick embedding purely to LOOK at where the doublets landed
-  tmp <- NormalizeData(merged, verbose = FALSE) |>
+  # subsample to ≤10 K cells (keep ALL doublets + random singlets) so ScaleData
+  # and RunUMAP finish in minutes rather than hours on large merged objects
+  dbl_cells <- colnames(merged)[merged$doublet == "doublet"]
+  sng_cells <- colnames(merged)[merged$doublet == "singlet"]
+  n_sng_sub <- min(length(sng_cells), max(10000L - length(dbl_cells), 2000L))
+  tmp <- merged[, c(dbl_cells, sample(sng_cells, n_sng_sub))]
+  tmp <- NormalizeData(tmp, verbose = FALSE) |>
          FindVariableFeatures(verbose = FALSE) |> ScaleData(verbose = FALSE) |>
          RunPCA(npcs = 20, verbose = FALSE) |> RunUMAP(dims = 1:20, verbose = FALSE)
   p_dumap <- DimPlot(tmp, group.by = "doublet", order = "doublet",
@@ -141,7 +147,7 @@ if (isTRUE(cfg$qc$remove_doublets)) {
   p_dvln <- VlnPlot(tmp, c("nCount_RNA","nFeature_RNA"), group.by = "doublet", pt.size = 0)
   ggsave(out_path(cfg, "qc", "doublet_violin.png"), p_dvln, width = 9, height = 4)
   ggsave(out_path(cfg, "qc", "doublet_violin.pdf"), p_dvln, width = 9, height = 4)
-  rm(tmp, p_dumap, p_dvln); invisible(gc())
+  rm(tmp, p_dumap, p_dvln, dbl_cells, sng_cells, n_sng_sub); invisible(gc())
 
   merged <- subset(merged, subset = doublet == "singlet")   # NOW remove them
 }

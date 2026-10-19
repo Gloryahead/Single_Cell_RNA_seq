@@ -115,7 +115,7 @@ rule qc_filter:
     resources:
         cpus_per_task = 8,
         mem_mb        = 51200,   # 8 × 5120 MB → 50 GB (SoupX loads raw + filtered per sample)
-        runtime       = 120,
+        runtime       = 240,     # ScaleData + RunUMAP on 12-sample merged object needs ~3 h
     singularity: R_SIF
     shell:
         rscript("code/03_qc_filter.R")
