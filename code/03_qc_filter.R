@@ -14,14 +14,18 @@ PROJECT <- Sys.getenv("SCRNA_PROJECT", "/home/u11/maarowosegbe/Single_Cell_RNA_s
 setwd(PROJECT); source("code/utils.R")
 suppressPackageStartupMessages(library(patchwork))
 suppressPackageStartupMessages(library(SoupX))
+suppressPackageStartupMessages(library(parallel))
 cfg <- load_config(); set.seed(cfg$seed)
+# use all SLURM-allocated CPUs for per-sample parallel loops
+n_cores <- min(length(cfg$samples),
+               as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", "4")))
 
 # ---- load each sample, run SoupX ambient RNA correction, compute QC metrics ----
 # SoupX uses the raw (all-droplet) matrix to learn the ambient soup profile, then
 # subtracts the estimated contamination from the filtered (cell) matrix.
 # Cell Ranger's graphclust labels are used for autoEstCont when available.
-soupx_stats <- list()
-objs <- lapply(cfg$samples, function(s) {
+# Samples are processed in parallel (mclapply) to use all allocated CPUs.
+soupx_result <- parallel::mclapply(cfg$samples, function(s) {
   counts_dir <- file.path(cfg$project$outdir, "counts", s$id, "outs")
 
   raw_counts  <- Read10X(file.path(counts_dir, "raw_feature_bc_matrix"))
@@ -49,18 +53,17 @@ objs <- lapply(cfg$samples, function(s) {
   rho_est <- tryCatch(sc$fit$rhoEst, error = function(e) NULL)
   rho     <- if (!is.null(rho_est) && length(rho_est) == 1L) rho_est else 0.1
   corrected <- SoupX::adjustCounts(sc, roundToInt = TRUE)
-  soupx_stats[[s$id]] <<- data.frame(sample = s$id,
-                                      contamination_pct = round(100 * rho, 2))
   message(sprintf("  %s: SoupX contamination = %.1f%%", s$id, 100 * rho))
-
   obj <- CreateSeuratObject(corrected, project = s$id, min.cells = cfg$qc$min_cells)
   rm(filt_counts, sc, corrected); invisible(gc())
-
   obj$sample <- s$id; obj$condition <- s$condition
-  add_qc_metrics(obj, cfg)
-})
+  list(obj   = add_qc_metrics(obj, cfg),
+       stats = data.frame(sample = s$id, contamination_pct = round(100 * rho, 2)))
+}, mc.cores = n_cores)
+objs <- lapply(soupx_result, `[[`, "obj")
 names(objs) <- vapply(cfg$samples, `[[`, "", "id")
-soupx_summary <- do.call(rbind, soupx_stats)
+soupx_summary <- do.call(rbind, lapply(soupx_result, `[[`, "stats"))
+rm(soupx_result)
 write.csv(soupx_summary, out_path(cfg, "qc", "soupx_summary.csv"), row.names = FALSE)
 cat("\n=== SoupX ambient RNA contamination per sample ===\n"); print(soupx_summary)
 # capture per-sample raw counts before any QC filtering
@@ -88,28 +91,29 @@ ggsave(out_path(cfg, "qc", "qc_scatter_prefilter.pdf"), p_scat, width = 7, heigh
 rm(pre, p_nfeat, p_ncount, p_mt, p_ribo, p_pre, p_scat); invisible(gc())
 
 # ---- filter + flag doublets, per sample (Parts 2 / 2-2) ----
-dbl_stats    <- list()
-filter_stats <- list()
-objs <- lapply(names(objs), function(id) {
-  obj    <- apply_qc_filter(objs[[id]], cfg)       # nFeature + percent.mt cutoffs
+qc_result <- parallel::mclapply(names(objs), function(id) {
+  obj    <- apply_qc_filter(objs[[id]], cfg)
   n_post <- ncol(obj)
-  filter_stats[[id]] <<- data.frame(
+  fstats <- data.frame(
     sample         = id,
     cells_raw      = cells_raw[[id]],
     cells_after_qc = n_post,
     pct_kept       = round(100 * n_post / cells_raw[[id]], 1)
   )
+  dstats <- NULL
   if (isTRUE(cfg$qc$remove_doublets)) {
-    obj   <- run_scdblfinder(obj)                  # adds $doublet: singlet/doublet
+    obj   <- run_scdblfinder(obj)
     n_dbl <- sum(obj$doublet == "doublet")
-    dbl_stats[[id]] <<- data.frame(sample = id, cells = n_post,
-                                   doublets = n_dbl,
-                                   pct = round(100 * n_dbl / n_post, 2))
+    dstats <- data.frame(sample = id, cells = n_post,
+                         doublets = n_dbl, pct = round(100 * n_dbl / n_post, 2))
   }
-  obj
-})
-names(objs) <- vapply(cfg$samples, `[[`, "", "id")
-filter_summary <- do.call(rbind, filter_stats)
+  list(obj = obj, fstats = fstats, dstats = dstats)
+}, mc.cores = n_cores)
+objs         <- lapply(qc_result, `[[`, "obj")
+names(objs)  <- vapply(cfg$samples, `[[`, "", "id")
+filter_summary <- do.call(rbind, lapply(qc_result, `[[`, "fstats"))
+dbl_stats    <- Filter(Negate(is.null), lapply(qc_result, `[[`, "dstats"))
+rm(qc_result)
 write.csv(filter_summary, out_path(cfg, "qc", "filter_summary.csv"), row.names = FALSE)
 cat("\n=== cells per sample after QC filtering ===\n"); print(filter_summary)
 
