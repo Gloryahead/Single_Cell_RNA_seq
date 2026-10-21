@@ -28,34 +28,49 @@ n_cores <- min(length(cfg$samples),
 soupx_result <- parallel::mclapply(cfg$samples, function(s) {
   counts_dir <- file.path(cfg$project$outdir, "counts", s$id, "outs")
 
-  raw_counts  <- Read10X(file.path(counts_dir, "raw_feature_bc_matrix"))
-  filt_counts <- Read10X(file.path(counts_dir, "filtered_feature_bc_matrix"))
-  sc <- SoupX::SoupChannel(raw_counts, filt_counts)
-  rm(raw_counts); invisible(gc())
+  # Cell Ranger 7+ moved graphclust to gene_expression_graphclust/; check both.
+  cl_path <- Find(file.exists, c(
+    file.path(counts_dir, "analysis", "clustering", "gene_expression_graphclust", "clusters.csv"),
+    file.path(counts_dir, "analysis", "clustering", "graphclust", "clusters.csv")
+  ))
 
-  cl_path <- file.path(counts_dir, "analysis", "clustering", "graphclust", "clusters.csv")
-  if (file.exists(cl_path)) {
-    cl     <- read.csv(cl_path)
+  if (!is.null(cl_path)) {
+    # Full SoupX: raw matrix + cluster-aware ambient RNA estimation.
+    raw_counts  <- Read10X(file.path(counts_dir, "raw_feature_bc_matrix"))
+    filt_counts <- Read10X(file.path(counts_dir, "filtered_feature_bc_matrix"))
+    sc <- SoupX::SoupChannel(raw_counts, filt_counts)
+    rm(raw_counts); invisible(gc())
+    cl      <- read.csv(cl_path)
     bc_col  <- grep("barcode", names(cl), ignore.case = TRUE, value = TRUE)[1]
     clu_col <- grep("cluster", names(cl), ignore.case = TRUE, value = TRUE)[1]
     sc <- SoupX::setClusters(sc, setNames(cl[[clu_col]], cl[[bc_col]]))
+    sc <- tryCatch(
+      SoupX::autoEstCont(sc),
+      error = function(e) {
+        message("  WARNING: autoEstCont failed for ", s$id, ": ", conditionMessage(e),
+                "\n  Falling back to 10% contamination estimate")
+        SoupX::setContaminationFraction(sc, 0.1)
+      }
+    )
+    rho_est   <- tryCatch(sc$fit$rhoEst, error = function(e) NULL)
+    rho       <- if (!is.null(rho_est) && length(rho_est) == 1L) rho_est else 0.1
+    corrected <- SoupX::adjustCounts(sc, roundToInt = TRUE)
+    rm(filt_counts, sc); invisible(gc())
   } else {
-    message("  ", s$id, ": graphclust not found — autoEstCont will use pseudobulk")
+    # No graphclust at either CR7+ or legacy path: autoEstCont cannot run.
+    # Skip reading the raw matrix (6.7M barcodes from Lustre = 90+ min per sample)
+    # and apply a uniform 10% correction to the filtered matrix directly.
+    message("  ", s$id, ": no graphclust — applying fixed 10% uniform correction")
+    filt_counts <- Read10X(file.path(counts_dir, "filtered_feature_bc_matrix"))
+    corrected   <- filt_counts
+    corrected@x <- as.integer(round(corrected@x * 0.9))
+    rho <- 0.1
+    rm(filt_counts); invisible(gc())
   }
-  sc <- tryCatch(
-    SoupX::autoEstCont(sc),
-    error = function(e) {
-      message("  WARNING: autoEstCont failed for ", s$id, ": ", conditionMessage(e),
-              "\n  Falling back to 10% contamination estimate")
-      SoupX::setContaminationFraction(sc, 0.1)
-    }
-  )
-  rho_est <- tryCatch(sc$fit$rhoEst, error = function(e) NULL)
-  rho     <- if (!is.null(rho_est) && length(rho_est) == 1L) rho_est else 0.1
-  corrected <- SoupX::adjustCounts(sc, roundToInt = TRUE)
+
   message(sprintf("  %s: SoupX contamination = %.1f%%", s$id, 100 * rho))
   obj <- CreateSeuratObject(corrected, project = s$id, min.cells = cfg$qc$min_cells)
-  rm(filt_counts, sc, corrected); invisible(gc())
+  rm(corrected); invisible(gc())
   obj$sample <- s$id; obj$condition <- s$condition
   list(obj   = add_qc_metrics(obj, cfg),
        stats = data.frame(sample = s$id, contamination_pct = round(100 * rho, 2)))
