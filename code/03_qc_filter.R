@@ -90,7 +90,7 @@ rm(soupx_result)
 write.csv(soupx_summary, out_path(cfg, "qc", "soupx_summary.csv"), row.names = FALSE)
 cat("\n=== SoupX ambient RNA contamination per sample ===\n"); print(soupx_summary)
 # capture per-sample raw counts before any QC filtering
-cells_raw <- vapply(objs, ncol, integer(1L))
+cells_raw <- vapply(objs, ncol, numeric(1L))   # Seurat ncol() returns double after mclapply deserialization
 
 # ---- QC plots BEFORE filtering: thresholds are decisions made from these ----
 pre <- merge(objs[[1]], objs[-1])
