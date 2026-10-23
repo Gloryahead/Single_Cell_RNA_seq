@@ -63,7 +63,7 @@ soupx_result <- parallel::mclapply(cfg$samples, function(s) {
     message("  ", s$id, ": no graphclust — applying fixed 10% uniform correction")
     filt_counts <- Read10X(file.path(counts_dir, "filtered_feature_bc_matrix"))
     corrected   <- filt_counts
-    corrected@x <- as.integer(round(corrected@x * 0.9))
+    corrected@x <- round(corrected@x * 0.9)   # keep as numeric (double); as.integer() fails @x validity
     rho <- 0.1
     rm(filt_counts); invisible(gc())
   }
@@ -75,6 +75,14 @@ soupx_result <- parallel::mclapply(cfg$samples, function(s) {
   list(obj   = add_qc_metrics(obj, cfg),
        stats = data.frame(sample = s$id, contamination_pct = round(100 * rho, 2)))
 }, mc.cores = n_cores)
+# Detect worker failures early — mclapply silently returns condition objects on error
+soupx_bad <- vapply(soupx_result, function(x) !is.list(x) || is.null(x$obj), logical(1L))
+if (any(soupx_bad)) {
+  failed_ids <- vapply(cfg$samples, `[[`, "", "id")[soupx_bad]
+  errs <- sapply(soupx_result[soupx_bad], function(e) tryCatch(as.character(e), error = function(x) "unknown"))
+  stop(sprintf("SoupX mclapply failed for %d sample(s): %s\nFirst error: %s",
+               sum(soupx_bad), paste(failed_ids, collapse = ", "), errs[[1]]))
+}
 objs <- lapply(soupx_result, `[[`, "obj")
 names(objs) <- vapply(cfg$samples, `[[`, "", "id")
 soupx_summary <- do.call(rbind, lapply(soupx_result, `[[`, "stats"))
@@ -124,6 +132,13 @@ qc_result <- parallel::mclapply(names(objs), function(id) {
   }
   list(obj = obj, fstats = fstats, dstats = dstats)
 }, mc.cores = n_cores)
+qc_bad <- vapply(qc_result, function(x) !is.list(x) || is.null(x$obj), logical(1L))
+if (any(qc_bad)) {
+  failed_ids <- names(objs)[qc_bad]
+  errs <- sapply(qc_result[qc_bad], function(e) tryCatch(as.character(e), error = function(x) "unknown"))
+  stop(sprintf("QC/doublet mclapply failed for %d sample(s): %s\nFirst error: %s",
+               sum(qc_bad), paste(failed_ids, collapse = ", "), errs[[1]]))
+}
 objs         <- lapply(qc_result, `[[`, "obj")
 names(objs)  <- vapply(cfg$samples, `[[`, "", "id")
 filter_summary <- do.call(rbind, lapply(qc_result, `[[`, "fstats"))
