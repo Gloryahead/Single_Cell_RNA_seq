@@ -24,7 +24,9 @@ log_session <- function(cfg, stage) {
 
 # ---- QC helpers (Part 2) ---------------------------------------------
 add_qc_metrics <- function(obj, cfg) {
-  obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = mito_pattern(cfg))
+  obj[["percent.mt"]]   <- PercentageFeatureSet(obj, pattern = mito_pattern(cfg))
+  ribo_pattern <- if (cfg$project$organism == "mouse") "^Rp[sl]" else "^RP[SL]"
+  obj[["percent.ribo"]] <- PercentageFeatureSet(obj, pattern = ribo_pattern)
   obj
 }
 apply_qc_filter <- function(obj, cfg) {
