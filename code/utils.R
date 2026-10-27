@@ -40,7 +40,8 @@ run_scdblfinder <- function(obj) {
   suppressPackageStartupMessages({ library(scDblFinder); library(SingleCellExperiment) })
   sce <- as.SingleCellExperiment(obj)
   has_s <- "sample" %in% colnames(SummarizedExperiment::colData(sce))
-  sce <- scDblFinder(sce, samples = if (has_s) "sample" else NULL)
+  sce <- scDblFinder(sce, samples = if (has_s) "sample" else NULL,
+                     BPPARAM = BiocParallel::SerialParam())
   obj$doublet <- sce$scDblFinder.class
   obj
 }

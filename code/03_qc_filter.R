@@ -131,7 +131,7 @@ qc_result <- parallel::mclapply(names(objs), function(id) {
                          doublets = n_dbl, pct = round(100 * n_dbl / n_post, 2))
   }
   list(obj = obj, fstats = fstats, dstats = dstats)
-}, mc.cores = n_cores)
+}, mc.cores = min(n_cores, 4L))
 qc_bad <- vapply(qc_result, function(x) !is.list(x) || is.null(x$obj), logical(1L))
 if (any(qc_bad)) {
   failed_ids <- names(objs)[qc_bad]
