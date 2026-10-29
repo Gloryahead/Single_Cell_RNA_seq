@@ -82,12 +82,19 @@ for s in samples:
 if not ldata_list:
     raise RuntimeError("No STARsolo Velocyto outputs found. Run starsolo first.")
 
+# Build gene_id -> gene_symbol map before concat; ad.concat may drop var columns
+id_to_sym = {}
+for a in ldata_list:
+    for gid, gsym in zip(a.var_names, a.var["gene_symbols"]):
+        id_to_sym[gid] = gsym
+
 # Concatenate across samples; inner join keeps only genes present in all samples
 ldata = ad.concat(ldata_list, join="inner") if len(ldata_list) > 1 else ldata_list[0]
 
 # Switch var_names to gene symbols (Ensembl IDs saved in var["gene_ids"])
-ldata.var["gene_ids"] = ldata.var_names.values
-ldata.var_names       = pd.Index(ldata.var["gene_symbols"].values)
+ldata.var["gene_ids"]     = ldata.var_names.values
+ldata.var["gene_symbols"] = [id_to_sym.get(g, g) for g in ldata.var_names]
+ldata.var_names           = pd.Index(ldata.var["gene_symbols"].values)
 ldata.var_names_make_unique()
 
 # ---- Intersect with Seurat metadata ---------------------------------------

@@ -74,11 +74,10 @@ obj <- TestSoftPowers(obj, networkType = "signed")
 
 # Auto-select: lowest power where signed R² ≥ 0.85; fall back to 6
 power_tbl  <- GetPowerTable(obj)
-best_power <- power_tbl %>%
-  filter(SFT.R.sq >= 0.85) %>%
-  arrange(Power) %>%
-  slice(1) %>%
-  pull(Power)
+# Use base R: dplyr::slice() conflicts with S4Vectors::Rle (loaded via hdWGCNA deps)
+ok_tbl     <- power_tbl[power_tbl$SFT.R.sq >= 0.85, ]
+ok_tbl     <- ok_tbl[order(ok_tbl$Power), ]
+best_power <- if (nrow(ok_tbl) > 0) ok_tbl$Power[1] else NULL
 if (length(best_power) == 0 || is.na(best_power)) {
   best_power <- 6L
   message("R² ≥ 0.85 not reached — using fallback soft_power = 6")

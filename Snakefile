@@ -175,8 +175,8 @@ rule slingshot:
     input:  f"{OUT}/objects/05_annotated.rds"
     output: f"{OUT}/objects/spoke_slingshot.rds"
     resources:
-        cpus_per_task = 8,
-        mem_mb        = 40960,   # 8 × 5120 MB = 40 GB
+        cpus_per_task = 12,
+        mem_mb        = 61440,   # 12 × 5120 MB = 60 GB (83K T/NK cells; chunked gene correlations)
         runtime       = 120,     # gene-pseudotime Spearman correlations add ~30-60 min
     singularity: R_SIF
     shell:

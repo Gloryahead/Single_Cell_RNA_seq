@@ -96,25 +96,32 @@ if (length(conds) >= 2) {
 # ---- Gene-pseudotime correlations (Spearman, BH) -----------------------
 # Compute t-approximation instead of per-gene cor.test (much faster).
 message("Computing gene-pseudotime correlations (Spearman)...")
-expr_mat  <- as.matrix(logcounts(sce))
-g_keep    <- rowSums(expr_mat > 0) >= 10
-expr_filt <- expr_mat[g_keep, , drop = FALSE]
-pt_vec    <- sce$slingshot_pseudotime
-rho_vec   <- apply(expr_filt, 1, function(x) cor(x, pt_vec, method = "spearman"))
-n_c       <- ncol(expr_filt)
-t_stat    <- rho_vec * sqrt((n_c - 2) / pmax(1e-12, 1 - rho_vec^2))
-p_vec     <- 2 * pt(abs(t_stat), df = n_c - 2, lower.tail = FALSE)
-fdr_vec   <- p.adjust(p_vec, method = "BH")
-gene_df   <- data.frame(gene = names(rho_vec), rho = round(rho_vec, 4),
-                        p_value = p_vec, FDR = fdr_vec, stringsAsFactors = FALSE)
-gene_df   <- gene_df[order(gene_df$FDR, -abs(gene_df$rho)), ]
-n_sig     <- sum(gene_df$FDR < 0.05, na.rm = TRUE)
+# Filter on sparse matrix to avoid materializing a 83K-cell × 33K-gene dense matrix (~21 GB)
+g_keep     <- rowSums(logcounts(sce) > 0) >= 10
+gene_keep  <- rownames(sce)[g_keep]
+pt_vec     <- sce$slingshot_pseudotime
+n_c        <- ncol(sce)
+# Process 2000 genes at a time so peak memory per chunk is ~1.5 GB
+chunk_size  <- 2000L
+gene_chunks <- split(gene_keep, ceiling(seq_along(gene_keep) / chunk_size))
+rho_vec <- unlist(lapply(gene_chunks, function(gns) {
+  mat_chunk <- as.matrix(logcounts(sce)[gns, , drop = FALSE])
+  apply(mat_chunk, 1, function(x) cor(x, pt_vec, method = "spearman"))
+}))
+invisible(gc())
+t_stat  <- rho_vec * sqrt((n_c - 2) / pmax(1e-12, 1 - rho_vec^2))
+p_vec   <- 2 * pt(abs(t_stat), df = n_c - 2, lower.tail = FALSE)
+fdr_vec <- p.adjust(p_vec, method = "BH")
+gene_df <- data.frame(gene = names(rho_vec), rho = round(rho_vec, 4),
+                      p_value = p_vec, FDR = fdr_vec, stringsAsFactors = FALSE)
+gene_df <- gene_df[order(gene_df$FDR, -abs(gene_df$rho)), ]
+n_sig   <- sum(gene_df$FDR < 0.05, na.rm = TRUE)
 cat(sprintf("\n%d trajectory-associated genes (FDR < 0.05)\n", n_sig))
 cat("Top genes:\n"); print(head(gene_df[gene_df$FDR < 0.05, ], 10))
 write.csv(gene_df[gene_df$FDR < 0.05, ],
           out_path(cfg, "tables", "spoke_slingshot_pseudotime_genes.csv"),
           row.names = FALSE)
-rm(expr_mat, expr_filt); invisible(gc())
+invisible(gc())
 
 # ---- Plots --------------------------------------------------------------
 umap_df <- as.data.frame(reducedDim(sce, "UMAP"))
